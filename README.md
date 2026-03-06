@@ -325,6 +325,8 @@ This directory contains SQL scripts used to initialize the databases when contai
     connector.name=hive
     hive.metastore.uri=thrift://hive-metastore:9083
     ```
+  - Purpose:
+    - Allows Trino to query data stored in object storage.
 
 ## Pre-requisites Docker, Docker Compose, and Git Installation Guide (Amazon Linux)
 This guide explains how to install **Docker**, **Docker Compose**, and **Git** on **Amazon Linux (Amazon Linux 2023 / Amazon Linux 2)** using the `dnf` package manager.
