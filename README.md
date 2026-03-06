@@ -9,7 +9,7 @@ DataWave currently runs analytics on an old on-prem Hadoop cluster that has seve
 - Availability issues – Cluster instability and downtime.
 - Operational overhead – Requires significant maintenance.
 Because of this, the company wants to modernize their data platform in the cloud.
-
+---
 ## Architecture Overview
 
 The DataWave SQL Federation Architecture enables unified querying across multiple heterogeneous data sources using Trino as the federation engine. It integrates governance, authentication, analytics, and auditing components to provide a secure and scalable data platform.
@@ -131,7 +131,7 @@ The DataWave SQL Federation Architecture enables unified querying across multipl
 - When a user queries data, Ranger generates audit logs which are stored in Elasticsearch.
 **Benefit**
 - Provides transparency and helps detect unauthorized data access.
-
+---
 ## Component Interaction Flow
 The following sequence describes how the components interact.
 
