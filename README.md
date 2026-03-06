@@ -1,8 +1,26 @@
-# Pre-requisites Docker, Docker Compose, and Git Installation Guide (Amazon Linux)
+#
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+## Pre-requisites Docker, Docker Compose, and Git Installation Guide (Amazon Linux)
 This guide explains how to install **Docker**, **Docker Compose**, and **Git** on **Amazon Linux (Amazon Linux 2023 / Amazon Linux 2)** using the `dnf` package manager.
 
 ------------------------------------------------------------------------
-## Prerequisites
+### Prerequisites
 Before starting, ensure:
 -   Amazon Linux instance (EC2 or local VM)
 -   `sudo` privileges
