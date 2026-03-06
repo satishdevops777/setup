@@ -20,7 +20,7 @@ The DataWave SQL Federation Architecture enables unified querying across multipl
 ### 1. Data Sources (Heterogeneous Databases)
 - Data sources are the systems where the actual data is stored. In this architecture, multiple types of databases are connected to the federation engine.
 - Examples of data sources include:
-  ```yml
+  ```text
   PostgreSQL – stores structured relational data
   MySQL – stores operational data
   Object storage (MinIO / S3) – stores large datasets or files
@@ -66,7 +66,7 @@ The DataWave SQL Federation Architecture enables unified querying across multipl
     - Enforce data security policies
     - Manage fine-grained permissions
 - Example Policies
-  ```yml
+  ```text
   Allow analysts to read only specific tables
   Restrict access to sensitive columns
   Limit data access based on user roles
@@ -435,5 +435,49 @@ You have successfully installed:
 -   Docker
 -   Docker Compose
 -   Git
-Your system is now ready to run **containerized applications, CI/CD
-pipelines, and DevOps workflows on Amazon Linux**.
+
+
+
+## Project Execution
+- After the Prerequisites section, add:
+
+Step 1 — Clone the Repository
+```
+git clone https://github.com/your-repository/sql-federation-project.git
+cd sql-federation-project
+```
+
+Step 2 — Start the Platform
+Start all services using Docker Compose.
+```bash
+docker-compose up -d
+```
+
+Step 3 - Verify Containers
+```
+docker ps
+```
+Expected running services:
+```yml
+trino
+postgres
+mysql
+minio
+hive-metastore
+metabase
+keycloak
+ranger
+```
+Step 4 - Service Access URLs
+- Service Access
+- After deployment, the services can be accessed at:
+
+| Service  | URL                                            | Description         |
+| -------- | ---------------------------------------------- | ------------------- |
+| Trino    | [http://localhost:8080](http://localhost:8080) | SQL query engine    |
+| Metabase | [http://localhost:3000](http://localhost:3000) | BI dashboards       |
+| MinIO    | [http://localhost:9001](http://localhost:9001) | Object storage UI   |
+| Keycloak | [http://localhost:8081](http://localhost:8081) | Authentication      |
+| Ranger   | [http://localhost:6080](http://localhost:6080) | Governance policies |
+
+
