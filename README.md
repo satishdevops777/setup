@@ -1,181 +1,111 @@
-# Pre-requisites Docker, Docker Compose, and Git Installation Guide
-
-This guide explains how to install **Docker**, **Docker Compose**, and **Git** on **Red Hat Enterprise Linux (RHEL)** or RHEL-based
-distributions using the **DNF package manager**.
+# Docker, Docker Compose, and Git Installation Guide (Amazon Linux)
+This guide explains how to install **Docker**, **Docker Compose**, and
+**Git** on **Amazon Linux (Amazon Linux 2023 / Amazon Linux 2)** using
+the `dnf` package manager.
 
 ------------------------------------------------------------------------
-
 ## Prerequisites
-
-Before installing ensure the following:
-
--   RHEL 8 / RHEL 9 or compatible distribution
--   `sudo` access
+Before starting, ensure:
+-   Amazon Linux instance (EC2 or local VM)
+-   `sudo` privileges
 -   Internet connectivity
 -   `dnf` package manager available
-
 ------------------------------------------------------------------------
-
-## 1. Update System Packages
-
-Update all system packages.
-
+### 1. Update System Packages
+Update all installed packages to the latest version.
 ``` bash
 sudo dnf update -y
 ```
-
 ------------------------------------------------------------------------
 
-## 2. Install Required Utilities
-
-Install repository management tools.
-
-``` bash
-sudo dnf install -y dnf-plugins-core
-```
-
-------------------------------------------------------------------------
-
-## 3. Install Docker
-
-Install Docker Engine.
-
+### 2. Install Docker
+Install Docker from the Amazon Linux repository.
 ``` bash
 sudo dnf install docker -y
 ```
-
 ------------------------------------------------------------------------
-
-## 4. Start and Enable Docker
-
-Start Docker service.
-
+### 3. Start Docker Service
+Start Docker.
 ``` bash
 sudo systemctl start docker
 ```
-
-Enable Docker on system boot.
-
+Enable Docker to start automatically at boot.
 ``` bash
 sudo systemctl enable docker
 ```
-
-Check Docker service status.
-
+Check Docker status.
 ``` bash
 sudo systemctl status docker
 ```
-
 Expected output:
-
-    Active: active (running)
-
+```bash
+Active: active (running)
+```
 ------------------------------------------------------------------------
 
-## 5. Run Docker Without sudo (Optional but Recommended)
-
+### 4. Run Docker Without sudo (Optional)
 Add your user to the Docker group.
-
 ``` bash
 sudo usermod -aG docker $USER
 ```
-
-Apply the new group permissions.
-
+Apply the group change.
 ``` bash
 newgrp docker
 ```
-
 ------------------------------------------------------------------------
 
-## 6. Verify Docker Installation
-
+### 5. Verify Docker Installation
 Check Docker version.
-
 ``` bash
 docker --version
 ```
-
 Example:
-
-    Docker version 25.x.x
-
+```bash
+Docker version 25.x
+```
 ------------------------------------------------------------------------
 
-## 7. Install and Verify Docker Compose
-
-Download the latest Docker Compose binary.
-
+### 6. Install Docker Compose
+Amazon Linux may not include Docker Compose by default, so install it
+manually.
+Download Docker Compose.
 ``` bash
 sudo curl -L https://github.com/docker/compose/releases/latest/download/docker-compose-linux-x86_64 -o /usr/local/bin/docker-compose
 ```
-
-Provide execute permission.
-
+Provide execution permission.
 ``` bash
 sudo chmod +x /usr/local/bin/docker-compose
 ```
-Check version.
-
+------------------------------------------------------------------------
+### 7. Verify Docker Compose Installation
+Check Docker Compose version.
 ``` bash
 docker-compose --version
 ```
-
-Example output:
-
+Example:
+``` bash
     Docker Compose version v2.x.x
-
+```
 ------------------------------------------------------------------------
-
-## 8. Install Git & Verify Git Installation
-
+### 8. Install & Verify Git
 Install Git using DNF.
-
 ``` bash
 sudo dnf install git -y
 ```
-
 Check Git version.
-
 ``` bash
 git --version
 ```
-
-Example output:
-
+Example:
+```bash
     git version 2.x.x
-
-Configure Git user details.
-
-``` bash
-git config --global user.name "Your Name"
-git config --global user.email "your-email@example.com"
 ```
-
-Verify configuration.
-
-``` bash
-git config --list
-```
-
 ------------------------------------------------------------------------
 
-## Installation Verification Summary
-
-  Component        Verification Command
-  ---------------- ----------------------------
-  Docker           `docker --version`
-  Docker Compose   `docker-compose --version`
-  Git              `git --version`
-
-------------------------------------------------------------------------
-
-
+### Conclusion
 You have successfully installed:
-
--   Docker Engine
+-   Docker
 -   Docker Compose
 -   Git
-
 Your system is now ready to run **containerized applications, CI/CD
-pipelines, and DevOps workflows**.
+pipelines, and DevOps workflows on Amazon Linux**.
