@@ -40,3 +40,5 @@ docker logs <container_name> --tail 50
 | Keycloak | [http://localhost:8081](http://localhost:8081) | Authentication      |
 
 **Note: Note: When deploying this setup on an AWS EC2 instance, replace localhost with the EC2 instance's public IP address to access the services from your browser or external systems.**
+
+**Step 5 - How to check
