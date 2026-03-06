@@ -20,7 +20,7 @@ The DataWave SQL Federation Architecture enables unified querying across multipl
 ### 1. Data Sources (Heterogeneous Databases)
 - Data sources are the systems where the actual data is stored. In this architecture, multiple types of databases are connected to the federation engine.
 - Examples of data sources include:
-  ```
+  ```yml
   PostgreSQL – stores structured relational data
   MySQL – stores operational data
   Object storage (MinIO / S3) – stores large datasets or files
@@ -45,7 +45,7 @@ The DataWave SQL Federation Architecture enables unified querying across multipl
     - Provides a unified query interface
 - Example:
   - A query can combine data from MySQL and PostgreSQL:
-    ```
+    ```yml
     SELECT s.shipment_id, l.location
     FROM mysql.shipments.shipments s
     JOIN postgres.logistics.locations l
@@ -66,7 +66,7 @@ The DataWave SQL Federation Architecture enables unified querying across multipl
     - Enforce data security policies
     - Manage fine-grained permissions
 - Example Policies
-  ```
+  ```yml
   Allow analysts to read only specific tables
   Restrict access to sensitive columns
   Limit data access based on user roles
@@ -161,7 +161,7 @@ The following sequence describes how the components interact.
 
 ## End-to-End Data Flow
 
-```
+```yml
 User
    │
    ▼
@@ -183,6 +183,148 @@ Multiple Data Sources
    ▼
 Elasticsearch (Audit Logs)
 ```
+
+
+## Project Structure
+---
+```yml
+sql-federation-project
+│
+├── docker-compose.yml
+│
+├── init-db
+│   ├── mysql-init.sql
+│   └── postgres-init.sql
+│
+├── trino
+│   ├── config.properties
+│   ├── jvm.config
+│   ├── node.properties
+│   ├── access-control.properties
+│   │
+│   └── catalog
+│       ├── hive.properties
+│       ├── mysql.properties
+│       └── postgresql.properties
+│
+└── README.md
+```
+## Directory Explanation
+### docker-compose.yml
+- Defines all services required for the architecture.
+- Services include:
+  - Trino (SQL federation engine)
+  - PostgreSQL
+  - MySQL
+  - MinIO
+  - Hive Metastore
+  - Metabase
+  - Keycloak
+  - Apache Ranger
+- Docker Compose allows the entire architecture to start with a single command:
+  ```yml
+  docker-compose up -d
+  ```
+### init-db/
+This directory contains SQL scripts used to initialize the databases when containers start.
+- **mysql-init.sql**
+  - Creates tables and sample data for the MySQL database.
+  - Example use case:
+    -  shipment data
+    - operational datasets
+- **postgres-init.sql**
+  - Creates tables and sample data for the PostgreSQL database.
+  - Example use case:
+    - logistics data
+    - location datasets
+  - These scripts run automatically when the database container starts. 
+
+
+### trino/
+- This directory contains the configuration files for the Trino SQL federation engine.
+- Trino uses these files to define how it runs and how it connects to external data sources.
+
+  **config.properties**
+  - Defines the Trino server configuration.
+  - Example parameters:
+    ```yml
+    coordinator=true
+    node-scheduler.include-coordinator=true
+    http-server.http.port=8080
+    discovery-server.enabled=true
+    ```
+  - Purpose:
+    - Configures the Trino coordinator
+    - Defines the HTTP port
+    - Enables cluster discovery
+
+  **jvm.config**
+  - Defines Java Virtual Machine settings for Trino.
+  - Example settings:
+    ```YML
+    -Xmx2G
+    -XX:+UseG1GC
+    ```
+  - Purpose:
+    - Controls memory allocation
+    - Improves performance and garbage collection
+
+  **node.properties**
+  - Defines node-specific configuration.
+  - Example:
+    ```YML
+    node.environment=production
+    node.id=trino-node-1
+    node.data-dir=/var/trino/data
+    ```
+  - Purpose:
+    - Identifies the node in the cluster
+    - Defines the data directory
+
+  **access-control.properties**
+  - Defines the authorization system used by Trino.
+  - Example:
+    ```YML
+    access-control.name=ranger
+    ```
+  - Purpose:
+    - Integrates Apache Ranger for access control policies.
+
+### catalog/
+- The catalog directory defines connectors to external data sources.
+- Each .properties file represents a data source connection.
+
+  **mysql.properties**
+  - Configures the MySQL connector.
+  - Example:
+    ```YML
+    connector.name=mysql
+    connection-url=jdbc:mysql://mysql:3306/shipments
+    connection-user=trino
+    connection-password=trino
+    ```
+  - Purpose:
+    - Allows Trino to query MySQL databases.
+  
+  **postgresql.properties**
+  - Configures the PostgreSQL connector.
+  - Example:
+    ```YML
+    connector.name=postgresql
+    connection-url=jdbc:postgresql://postgres:5432/logistics
+    connection-user=trino
+    connection-password=trino
+    ```
+  - Purpose:
+    - Enables Trino to access PostgreSQL tables.
+
+  **hive.properties**
+  - Configures the Hive connector for querying data stored in object storage (MinIO / S3).
+  - Example:
+    ```
+    connector.name=hive
+    hive.metastore.uri=thrift://hive-metastore:9083
+    ```
 
 ## Pre-requisites Docker, Docker Compose, and Git Installation Guide (Amazon Linux)
 This guide explains how to install **Docker**, **Docker Compose**, and **Git** on **Amazon Linux (Amazon Linux 2023 / Amazon Linux 2)** using the `dnf` package manager.
