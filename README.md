@@ -21,13 +21,13 @@ The DataWave SQL Federation Architecture enables unified querying across multipl
 - Data sources are the systems where the actual data is stored. In this architecture, multiple types of databases are connected to the federation engine.
 - Examples of data sources include:
   ```
-    PostgreSQL – stores structured relational data
-    MySQL – stores operational data
-    Object storage (MinIO / S3) – stores large datasets or files
-    Other databases – such as Hive, Elasticsearch, or analytics systems
-    ```
-    **Purpose**
-    - These systems hold the raw data used by applications and business teams.
+  PostgreSQL – stores structured relational data
+  MySQL – stores operational data
+  Object storage (MinIO / S3) – stores large datasets or files
+  Other databases – such as Hive, Elasticsearch, or analytics systems
+  ```
+  **Purpose**
+  - These systems hold the raw data used by applications and business teams.
     
   **Role in the Architecture**
   - Instead of copying or moving the data into one centralized database, the architecture allows querying data directly from these systems using the federation engine.
@@ -44,7 +44,7 @@ The DataWave SQL Federation Architecture enables unified querying across multipl
     - Combines results from multiple systems
     - Provides a unified query interface
 - Example:
-    - A query can combine data from MySQL and PostgreSQL:
+  - A query can combine data from MySQL and PostgreSQL:
     ```
     SELECT s.shipment_id, l.location
     FROM mysql.shipments.shipments s
@@ -66,11 +66,11 @@ The DataWave SQL Federation Architecture enables unified querying across multipl
     - Enforce data security policies
     - Manage fine-grained permissions
 - Example Policies
-    ```
-    Allow analysts to read only specific tables
-    Restrict access to sensitive columns
-    Limit data access based on user roles
-    ```
+  ```
+  Allow analysts to read only specific tables
+  Restrict access to sensitive columns
+  Limit data access based on user roles
+  ```
   **Role in Architecture**
   - Ranger integrates with Trino to check whether a user is allowed to access certain data before executing the query.
     
