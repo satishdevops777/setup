@@ -1,4 +1,18 @@
 # DATAWAVE INDUSTRIES - SQL FEDERATION ARCHITECTURE 
+
+## Table of Contents
+
+- Problem Summary
+- Architecture Overview
+- Core Components
+- Component Interaction Flow
+- End-to-End Data Flow
+- Project Structure
+- Directory Explanation
+- Prerequisites
+- Project Execution
+- Service Access
+
 ---
 ## Problem Summary
 DataWave currently runs analytics on an old on-prem Hadoop cluster that has several issues:
@@ -161,7 +175,7 @@ The following sequence describes how the components interact.
 
 ## End-to-End Data Flow
 
-```yml
+```text
 User
    │
    ▼
