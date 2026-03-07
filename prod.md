@@ -783,7 +783,4 @@ To access Metabase through Keycloak (SSO), the next steps are to create a realm,
         User → OAuth2 Proxy → Keycloak Login → Metabase
         ``` 
       
-   
-  - This client configuration allows Metabase to authenticate users through Keycloak using OpenID Connect (OIDC).
-  - 
 
