@@ -1087,4 +1087,190 @@ These troubleshooting steps help diagnose:
 -   Keycloak authentication configuration
 -   OAuth2 Proxy SSO integration
 -   Docker container networking
-      
+
+
+# Improvements and Conclusion
+
+While the current SQL Federation architecture successfully demonstrates
+unified querying across heterogeneous data sources, authentication with
+Keycloak SSO, and analytics through Metabase, several improvements can
+further enhance scalability, security, and operational reliability for
+production deployments.
+
+------------------------------------------------------------------------
+
+## Future Improvements
+
+### 1. CI/CD Pipeline Implementation
+
+Currently the platform is deployed manually using Docker Compose.\
+In a production environment, deployment should be automated using a
+**CI/CD pipeline**.
+
+Possible CI/CD tools:
+
+-   GitLab CI/CD
+-   GitHub Actions
+-   Jenkins
+
+Example CI/CD workflow:
+
+Developer Commit → Git Repository → CI/CD Pipeline → Build Docker Images
+→ Run Tests → Security Scans → Push Images → Deploy to Kubernetes
+
+Benefits:
+
+-   Automated deployments
+-   Faster release cycles
+-   Reduced manual errors
+-   Continuous testing and validation
+
+------------------------------------------------------------------------
+
+### 2. Migration to Kubernetes
+
+The current deployment runs all services on a single host using Docker
+Compose.\
+For production workloads, the platform should be migrated to
+**Kubernetes**.
+
+Benefits:
+
+-   Auto‑scaling of services
+-   Self‑healing containers
+-   Rolling updates
+-   High availability
+-   Better resource management
+
+Suggested Kubernetes architecture:
+
+Kubernetes Cluster - Trino Deployment - MySQL StatefulSet - PostgreSQL
+StatefulSet - Metabase Deployment - Keycloak Deployment - OAuth2 Proxy
+Deployment
+
+Databases should run as **StatefulSets** while application services run
+as **Deployments**.
+
+------------------------------------------------------------------------
+
+### 3. Secure Secret Management (AWS Secrets Manager)
+
+Currently credentials such as database passwords and client secrets are
+stored in configuration files or environment variables.
+
+In production environments, secrets should be managed using a secure
+secret management system such as:
+
+-   AWS Secrets Manager
+-   HashiCorp Vault
+-   Kubernetes Secrets
+
+Secrets that should be protected:
+
+-   Database credentials
+-   OAuth client secrets
+-   Keycloak admin credentials
+-   API keys
+
+Benefits:
+
+-   Secure storage of credentials
+-   Centralized secret management
+-   Secret rotation support
+-   Reduced risk of credential exposure
+
+------------------------------------------------------------------------
+
+### 4. SSL/TLS Security
+
+Currently services communicate over HTTP for development purposes.\
+Production systems should enable **HTTPS with SSL/TLS encryption**.
+
+Recommended improvements:
+
+-   Use AWS ACM or Let's Encrypt certificates
+-   Enable HTTPS for Keycloak authentication endpoints
+-   Secure Metabase dashboards
+-   Protect Trino APIs
+
+Example secure architecture:
+
+User → HTTPS Load Balancer → Metabase / Keycloak / Trino
+
+Benefits:
+
+-   Secure authentication
+-   Encrypted communication
+-   Protection against man‑in‑the‑middle attacks
+
+------------------------------------------------------------------------
+
+### 5. Monitoring and Observability
+
+Operational visibility is critical in production environments.
+
+Recommended tools:
+
+-   Prometheus -- metrics collection
+-   Grafana -- monitoring dashboards
+-   Elasticsearch -- centralized logging
+-   Alertmanager -- alert notifications
+
+Key metrics to monitor:
+
+-   Query performance
+-   Trino cluster health
+-   Database connectivity
+-   Authentication failures
+-   Resource usage
+
+Benefits:
+
+-   Real‑time system visibility
+-   Faster troubleshooting
+-   Performance optimization
+
+------------------------------------------------------------------------
+
+### 6. Trino Cluster Scaling
+
+Currently Trino runs as a single node.\
+Production deployments should run **distributed Trino clusters**.
+
+Example architecture:
+
+Trino Coordinator - Worker Node 1 - Worker Node 2 - Worker Node 3
+
+Benefits:
+
+-   Parallel query execution
+-   Higher performance
+-   Horizontal scalability
+
+------------------------------------------------------------------------
+
+# Conclusion
+
+This project demonstrates the design and implementation of a **modern
+SQL Federation architecture** capable of querying multiple heterogeneous
+data sources through a unified interface.
+
+Key capabilities implemented:
+
+-   SQL federation using Trino
+-   Integration of multiple databases such as MySQL and PostgreSQL
+-   Centralized authentication and Single Sign‑On using Keycloak
+-   Business intelligence dashboards using Metabase
+-   Containerized deployment using Docker Compose
+
+The architecture enables organizations to analyze distributed datasets
+without requiring complex data migration or centralized storage systems.
+
+With further improvements such as Kubernetes orchestration, CI/CD
+automation, secure secret management, TLS security, and monitoring, the
+platform can evolve into a **production‑ready cloud‑native data
+analytics platform**.
+
+This architecture provides a strong foundation for scalable, secure, and
+flexible analytics infrastructure capable of supporting modern
+data‑driven organizations.
