@@ -348,7 +348,7 @@ This directory contains SQL scripts used to initialize the databases when contai
 
 # Project Execution
 
-## Setup Instructions
+## Setup Instructions & User Guide
 
 **Step 1 — How to install dependencies**
 - Prerequisites
