@@ -13,7 +13,7 @@
 - Project Execution
   - Setup Instructions & User Guide
 - SSO Integration
-- Troubleshooting steps
+- Troubleshooting Guide
 - Improvements and Conclusion
 
 ---
@@ -89,7 +89,8 @@ The DataWave SQL Federation Architecture enables unified querying across multipl
 - Benefit
   - Ensures secure and controlled access to sensitive data
 
-ℹ️ **Note:** Apache Ranger is **not implemented in this project** because an official and lightweight Docker image is not readily available in public repositories for simple local deployment. However, in a production-  grade architecture, Apache Ranger can be integrated with Trino to enforce access control policies.
+ℹ️ **Note:** Apache Ranger is **not implemented in this project** because an official and lightweight Docker image is not readily available in public repositories for simple local deployment. However, 
+in a production-grade architecture, Apache Ranger can be integrated with Trino to enforce access control policies.
 
 ### 4. Keycloak (Authentication and Single Sign-On)
 - Keycloak provides identity and access management.
@@ -408,7 +409,7 @@ Trino
   - Container IP addresses
   - Network configuration
 
-ℹ️ **Note:** This commands can be useful for troubleshooting network-related issues between services running in the Docker Compose environment.
+ℹ️ **Note:** This command can be useful for troubleshooting network-related issues between services running in the Docker Compose environment.
 
 
 ## Project Execution
