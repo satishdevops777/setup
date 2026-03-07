@@ -1,4 +1,4 @@
-<img width="1420" height="947" alt="image" src="https://github.com/user-attachments/assets/b4cdce85-c4ba-49e9-9a78-f75d283ca8b0" /># DATAWAVE INDUSTRIES - SQL FEDERATION ARCHITECTURE 
+# DATAWAVE INDUSTRIES - SQL FEDERATION ARCHITECTURE 
 
 ## Table of Contents
 
@@ -782,5 +782,3 @@ To access Metabase through Keycloak (SSO), the next steps are to create a realm,
         ```
         User → OAuth2 Proxy → Keycloak Login → Metabase
         ``` 
-      
-
