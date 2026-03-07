@@ -10,6 +10,7 @@
 - Project Structure
 - Directory Explanation
 - Project Execution
+  - Setup Instructions & User Guide
 - SSO Integration
 - Troubleshooting steps
 - Improvements and Conclusion
