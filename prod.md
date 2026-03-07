@@ -781,4 +781,310 @@ To access Metabase through Keycloak (SSO), the next steps are to create a realm,
       - Flow:
         ```
         User → OAuth2 Proxy → Keycloak Login → Metabase
-        ``` 
+        ```
+
+
+# Troubleshooting Steps
+
+During the implementation of the SQL Federation Architecture several issues were encountered while configuring Trino, connecting Metabase to the federation engine, integrating Keycloak for authentication, and configuring OAuth2 Proxy for SSO. This section documents common problems and their solutions.
+
+------------------------------------------------------------------------
+
+## 1. Trino Container Shows Unhealthy Status
+
+**Symptom**
+
+Running:
+
+    docker ps
+
+may show:
+
+    trino   Up (unhealthy)
+
+**Cause**
+
+Trino health checks may fail temporarily during startup while connectors
+initialize.
+
+**Solution**
+
+Check Trino logs:
+
+    docker logs trino
+
+If logs contain:
+
+    SERVER STARTED
+
+then Trino started successfully.
+
+------------------------------------------------------------------------
+
+## 2. Trino Cannot Connect to MySQL or PostgreSQL
+
+**Error**
+
+    Connection refused
+
+**Cause**
+
+Incorrect host configuration in Trino catalog.
+
+**Solution**
+
+Check configuration inside:
+
+    trino/catalog/
+
+Example MySQL:
+
+    connector.name=mysql
+    connection-url=jdbc:mysql://mysql:3306/shipments
+    connection-user=trino
+    connection-password=trino
+
+Example PostgreSQL:
+
+    connector.name=postgresql
+    connection-url=jdbc:postgresql://postgres:5432/logistics
+    connection-user=trino
+    connection-password=trino
+
+Restart Trino:
+
+    docker restart trino
+
+------------------------------------------------------------------------
+
+## 3. Trino Catalog Not Visible
+
+**Symptom**
+
+    SHOW CATALOGS
+
+does not show expected catalogs.
+
+**Solution**
+
+Ensure catalog files exist:
+
+    mysql.properties
+    postgresql.properties
+    hive.properties
+
+Restart Trino.
+
+------------------------------------------------------------------------
+
+## 4. Metabase Cannot Connect to Trino
+
+**Cause**
+
+Incorrect database connection configuration.
+
+**Solution**
+
+Use:
+
+  Field           Value
+  --------------- ----------
+  Database Type   Trino
+  Host            trino
+  Port            8080
+  Catalog         postgres
+  Username        admin
+
+------------------------------------------------------------------------
+
+## 5. Metabase Cannot See Tables
+
+Use full catalog names.
+
+Example:
+
+    SELECT * FROM mysql.shipments.shipments
+
+    SELECT * FROM postgresql.public.customers
+
+------------------------------------------------------------------------
+
+## 6. Semicolon Not Required in Metabase SQL Editor
+
+Incorrect:
+
+    SELECT * FROM mysql.shipments.shipments;
+
+Correct:
+
+    SELECT * FROM mysql.shipments.shipments
+
+Metabase automatically executes queries and does not require `;`.
+
+------------------------------------------------------------------------
+
+## 7. OAuth2 Proxy Cookie Secret Error
+
+**Error**
+
+    cookie_secret must be 16, 24, or 32 bytes
+
+**Solution**
+
+Generate:
+
+    openssl rand -hex 16
+
+Example:
+
+    e168b6db76fdffc9d9eced4412709443
+
+------------------------------------------------------------------------
+
+## 8. OAuth2 Proxy Cannot Reach Keycloak
+
+**Error**
+
+    failed to discover OIDC configuration
+    connection refused
+
+Restart services:
+
+    docker restart keycloak
+    docker restart oauth2-proxy
+
+------------------------------------------------------------------------
+
+## 9. Invalid Client Credentials
+
+**Error**
+
+    unauthorized_client
+    Invalid client credentials
+
+**Solution**
+
+Retrieve secret from:
+
+    Keycloak → Clients → metabase → Credentials
+
+Update docker-compose and restart oauth2-proxy.
+
+------------------------------------------------------------------------
+
+## 10. Keycloak Realm Does Not Exist
+
+List realms:
+
+    docker exec -it keycloak /opt/keycloak/bin/kcadm.sh get realms
+
+Ensure realm name matches configuration.
+
+Example:
+
+    datawave
+
+------------------------------------------------------------------------
+
+## 11. HTTPS Required Error in Keycloak
+
+Enter container:
+
+    docker exec -it keycloak /bin/bash
+
+Login CLI:
+
+    /opt/keycloak/bin/kcadm.sh config credentials --server http://localhost:8080 --realm master --user admin --password admin
+
+Disable HTTPS:
+
+    /opt/keycloak/bin/kcadm.sh update realms/datawave -s sslRequired=NONE
+
+Restart:
+
+    docker restart keycloak
+
+------------------------------------------------------------------------
+
+## 12. Authentication Loop
+
+Clear browser cookies or open incognito window.
+
+Ensure:
+
+    OAUTH2_PROXY_COOKIE_SECURE=false
+
+------------------------------------------------------------------------
+
+## 13. Docker Troubleshooting Commands
+
+Check containers:
+
+    docker ps
+
+Check all containers:
+
+    docker ps -a
+
+View logs:
+
+    docker logs trino
+    docker logs metabase
+    docker logs keycloak
+    docker logs oauth2-proxy
+
+Recent logs:
+
+    docker logs trino --tail 50
+
+Restart services:
+
+    docker restart trino
+    docker restart metabase
+    docker restart keycloak
+    docker restart oauth2-proxy
+
+Restart stack:
+
+    docker-compose restart
+
+Stop stack:
+
+    docker-compose down
+
+Start stack:
+
+    docker-compose up -d
+
+------------------------------------------------------------------------
+
+## 14. Verify Trino CLI
+
+    docker exec -it trino trino
+
+Run:
+
+    SHOW CATALOGS
+    SHOW SCHEMAS FROM mysql
+    SHOW TABLES FROM postgresql.public
+
+------------------------------------------------------------------------
+
+## 15. Verify Container Networking
+
+    docker exec -it trino ping mysql
+    docker exec -it trino ping postgres
+    docker exec -it trino ping keycloak
+
+------------------------------------------------------------------------
+
+## Summary
+
+These troubleshooting steps help diagnose:
+
+-   Trino federation issues
+-   Metabase query problems
+-   Keycloak authentication configuration
+-   OAuth2 Proxy SSO integration
+-   Docker container networking
+      
