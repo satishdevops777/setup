@@ -9,6 +9,7 @@
 - End-to-End Data Flow
 - Project Structure
 - Directory Explanation
+- Docker Networking and Container Communication in SQL Federation Architecture
 - Project Execution
   - Setup Instructions & User Guide
 - SSO Integration
@@ -344,19 +345,15 @@ This directory contains SQL scripts used to initialize the databases when contai
   - Purpose:
     - Allows Trino to query data stored in object storage.
 
+# Docker Networking and Container Communication in SQL Federation Architecture
 
-
-# Docker Networking and Container Communication
-
-Docker Compose automatically creates an **isolated virtual network** for
-all services defined in the `docker-compose.yml` file.\
-This allows containers to communicate with each other using **service
+Docker Compose automatically creates an **isolated virtual network** for all services defined in the `docker-compose.yml` file.\ This allows containers to communicate with each other using **service
 names instead of IP addresses**.
 
 When the platform is started with:
-
+```
 docker-compose up -d
-
+```
 Docker automatically creates a network similar to:
 
 sql_federation_architecture_default
