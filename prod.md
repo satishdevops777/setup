@@ -1,4 +1,4 @@
-# DATAWAVE INDUSTRIES - SQL FEDERATION ARCHITECTURE 
+<img width="1420" height="947" alt="image" src="https://github.com/user-attachments/assets/b4cdce85-c4ba-49e9-9a78-f75d283ca8b0" /># DATAWAVE INDUSTRIES - SQL FEDERATION ARCHITECTURE 
 
 ## Table of Contents
 
@@ -12,7 +12,7 @@
 - Project Execution
 - SSO Integration
 - Troubleshooting steps
-- Improvements and Conculsion
+- Improvements and Conclusion
 
 ---
 ## Problem Summary
@@ -570,4 +570,220 @@ docker logs <container_name> --tail 50
     <img width="589" height="580" alt="image" src="https://github.com/user-attachments/assets/55a48ccc-e8e6-42f1-8531-b2fba28ea58f" />
 
 
+##  SSO implementation
+---
+Keycloak is used to provide centralized authentication and Single Sign-On (SSO) for the data platform.
+
+In the SQL Federation architecture, multiple services such as Metabase, Trino, and other applications may need secure user access. Instead of each service managing its own user accounts, Keycloak acts as a central identity provider.
+
+### Architecture with SSO
+
+```
+User
+  │
+  ▼
+Keycloak (SSO Authentication)
+  │
+  ├──► Metabase (BI Tool)
+  │         │
+  │         ▼
+  │      Trino
+  │
+  └──► Trino UI
+            │
+            ▼
+     PostgreSQL / MySQL / Hive
+```
+**Step 1 – Running Keycloak in Development Mode (Disable HTTPS)**
+In this setup, Keycloak is started in development mode, which disables the strict HTTPS requirement. This allows services such as Trino and Metabase to communicate with Keycloak using HTTP during testing.
+In the docker-compose.yml file, Keycloak is configured with the following command:
+```yml
+keycloak:
+  image: quay.io/keycloak/keycloak:latest
+  container_name: keycloak
+  command: start-dev
+  environment:
+    KEYCLOAK_ADMIN: admin
+    KEYCLOAK_ADMIN_PASSWORD: admin
+  ports:
+    - "8081:8080"
+```
+The start-dev command runs Keycloak in development mode, But still you will see HTTPS Required 
+
+
+
+<img width="1603" height="851" alt="image" src="https://github.com/user-attachments/assets/6f9bb762-67ae-4917-8afb-4b27985749b8" />
+
+**Note: Note: In this setup, the EC2 instance public IP is 174.129.146.225 and the Keycloak UI is accessible on port 8081. The Keycloak Web UI can be accessed using http://174.129.146.225:8081**
+**Step 2 – Run the following configuration to disable HTTPS and access the Keycloak UI**
+
+- Enter the Keycloak Container and Run the following command to access the Keycloak container shell. This allows you to inspect configurations, run commands, or troubleshoot issues inside the container.
+  ```bash
+  docker exec -it keycloak /bin/bash
+  ```
+- Login to Keycloak Admin CLI
+  - After entering the Keycloak container, use the Keycloak Admin CLI (kcadm.sh) to authenticate and manage Keycloak configurations such as realms, users, and clients.
+  - Run the following command to log in to the Keycloak admin CLI:
+    ```
+    /opt/keycloak/bin/kcadm.sh config credentials \
+    --server http://localhost:8080 \
+    --realm master \
+    --user admin \
+    --password admin
+    ```
+  - This command authenticates to the Keycloak master realm using the admin credentials and allows you to perform administrative operations using the CLI.
+  - Once authenticated, you can use the Keycloak Admin CLI to create realms, users, roles, and configure authentication settings.
+-  Disable HTTPS Requirement in Keycloak
+  -  By default, Keycloak may enforce HTTPS for secure communication. For development or testing environments, the HTTPS requirement can be disabled to allow HTTP access.
+  -  Run the following command inside the Keycloak container:
+     ```
+     /opt/keycloak/bin/kcadm.sh update realms/master -s sslRequired=NONE
+     ```
+  - This command updates the master realm configuration and disables the mandatory HTTPS requirement.
+**⚠️ Note: Disabling HTTPS should only be done in development or testing environments. In production deployments, HTTPS must be enabled to ensure secure authentication and communication.**
+  - Restart Keycloak and trino
+    ```
+    docker restart keycloak
+    docker restart keycloak
+    ```
+
+    <img width="1199" height="525" alt="image" src="https://github.com/user-attachments/assets/ccc2f91c-8826-4647-a5e0-200089fe8fe3" />
+
+    
+  - After disabling the HTTPS requirement, the Keycloak Admin Console can be accessed using HTTP.
+    - Use the following URL and default credentials to log in:
+      ```text
+      # Keycloak Web UI URL
+      http://18.232.99.36:8081 
+
+      # Username and Password
+      Username: admin
+      Password: admin
+      ```
+
+      <img width="1676" height="948" alt="image" src="https://github.com/user-attachments/assets/ae461eb4-d3ce-4514-b930-673e3090d2d4" />
+
+**Step 3 – How to access Metabase through Keycloak (SSO)**
+To access Metabase through Keycloak (SSO), the next steps are to create a realm, create a client for Metabase in Keycloak, and configure Metabase to use Keycloak as an OpenID Connect provider.
+- Create a New Realm: Click Manage Realm → Create Realm
+  ```
+  Realm Name: datawave # You can use any name
+  ```
+  <img width="1613" height="858" alt="image" src="https://github.com/user-attachments/assets/d78556ba-041c-4d01-bba1-8fe33806d496" />
+
+- Create a Client for Metabase: Clients → Create Client
+  - Use the following values: Click Save.
+    | Field       | Value                                                      |
+    | ----------- | ---------------------------------------------------------- |
+    | Client ID   | metabase                                                   |
+    | Client Type | OpenID Connect                                             |
+    | Root URL    | [http://174.129.146.225:3000](http://174.129.146.225:3000) |
+
+    <img width="1499" height="666" alt="image" src="https://github.com/user-attachments/assets/d406f9ad-bdd8-44e6-9dea-37e2adc95c87" />
+
+- Configure Client Capability Settings
+  - Use the same options shown and Click Save
+    ```
+    | Setting               | Value   |
+    | --------------------- | ------- |
+    | Client Authentication | ON      |
+    | Authorization         | OFF     |
+    | Standard Flow         | ENABLED |
+    | Direct Access Grants  | OFF     |
+    | Implicit Flow         | OFF     |
+    | Service Accounts      | OFF     |
+    ```
+- Configure Redirect URI
+  
+  | Field               | Value                                                         |
+  | ------------------- | ------------------------------------------------------------- |
+  | Valid Redirect URIs | [http://174.129.146.225:3000/](http://174.129.146.225:3000/)* |
+  | Web Origins         | *                                                             |
+
+- Copy Client Secret
+  - Go to:
+    ```
+    Clients → metabase → Credentials
+    ```
+  - Copy the Client Secret. We will use this in Metabase.
+ 
+- Configure Metabase SSO
+  - Open Metabase: 
+    ```
+    http://174.129.146.225:3000
+    ```
+
+    <img width="1420" height="947" alt="image" src="https://github.com/user-attachments/assets/9f23a853-af5e-4241-b7f1-f84cabf42caa" />
+
+  - Metabase → Trino Connection Settings
+    | Field        | Value            |
+    | ------------ | ---------------- |
+    | Display Name | Trino Federation |
+    | Host         | trino            |
+    | Port         | 8080             |
+    | Catalog      | postgres         |
+    | Username     | admin            |
+
+
+    <img width="1457" height="727" alt="image" src="https://github.com/user-attachments/assets/be7f1db5-de18-446a-bde1-a895ace99ce3" />
+
+    - Go to:
+      ```
+      Admin Settings → Authentication → OpenID Connect
+      ```
+      <img width="1902" height="861" alt="image" src="https://github.com/user-attachments/assets/78dd57e2-fff9-432a-b801-0584bf92a4db" />
+
+      
+    - Fill In and save
+      ```
+      | Field             | Value                                                                                                                                                        |
+      | ----------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+      | Client ID         | metabase                                                                                                                                                     |
+      | Client Secret     | (paste from Keycloak)                                                                                                                                        |
+      | Authorization URL | [http://174.129.146.225:8081/realms/datawave/protocol/openid-connect/auth](http://174.129.146.225:8081/realms/datawave/protocol/openid-connect/auth)         |
+      | Token URL         | [http://174.129.146.225:8081/realms/datawave/protocol/openid-connect/token](http://174.129.146.225:8081/realms/datawave/protocol/openid-connect/token)       |
+      | User Info URL     | [http://174.129.146.225:8081/realms/datawave/protocol/openid-connect/userinfo](http://174.129.146.225:8081/realms/datawave/protocol/openid-connect/userinfo) |
+      ```
+    - Logout from Metabase
+      - Open again:
+        ```
+        http://174.129.146.225:3000
+        ```
+      - Now you should see: Sign in with Keycloak
+
+    - Since Metabase Community Edition does not support OpenID Connect natively, OAuth2 Proxy is deployed as an authentication gateway to integrate Keycloak SSO. OAuth2 Proxy handles authentication with Keycloak and     forwards authenticated users to Metabase.
+      - Add OAuth2 Proxy Container: Update docker-compose.yml.
+        ```yml
+        oauth2-proxy:
+        image: quay.io/oauth2-proxy/oauth2-proxy:v7.6.0
+        container_name: oauth2-proxy
+        ports:
+          - "4180:4180"
+        environment:
+          OAUTH2_PROXY_PROVIDER: oidc
+          OAUTH2_PROXY_CLIENT_ID: metabase
+          OAUTH2_PROXY_CLIENT_SECRET: <CLIENT_SECRET>    # Replace with Secret Value
+          OAUTH2_PROXY_COOKIE_SECRET: random_cookie_secret
+          OAUTH2_PROXY_OIDC_ISSUER_URL: http://keycloak:8080/realms/datawave
+          OAUTH2_PROXY_REDIRECT_URL: http://174.129.146.225:4180/oauth2/callback
+          OAUTH2_PROXY_UPSTREAMS: http://metabase:3000
+          OAUTH2_PROXY_HTTP_ADDRESS: 0.0.0.0:4180
+        ```
+    - Access Metabase through OAuth Proxy
+      - Instead of opening:
+        ```
+        http://174.129.146.225:3000
+        ```
+      - Open:
+        ```
+        http://174.129.146.225:4180
+        ```
+      - Flow:
+        ```
+        User → OAuth2 Proxy → Keycloak Login → Metabase
+        ``` 
+      
+   
+  - This client configuration allows Metabase to authenticate users through Keycloak using OpenID Connect (OIDC).
+  - 
 
