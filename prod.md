@@ -691,10 +691,8 @@ Note: At the end of the query do not use `;` semicolon to run queries through me
 
 
 ##  SSO implementation
----
-Keycloak is used to provide centralized authentication and Single Sign-On (SSO) for the data platform.
-
-In the SQL Federation architecture, multiple services such as Metabase, Trino, and other applications may need secure user access. Instead of each service managing its own user accounts, Keycloak acts as a central identity provider.
+- Keycloak is used to provide centralized authentication and Single Sign-On (SSO) for the data platform.
+- In the SQL Federation architecture, multiple services such as Metabase, Trino, and other applications may need secure user access. Instead of each service managing its own user accounts, Keycloak acts as a central identity provider.
 
 ### Architecture with SSO
 
@@ -715,31 +713,30 @@ Keycloak (SSO Authentication with Oauth2)
      PostgreSQL / MySQL / Hive
 ```
 **Step 1 – Running Keycloak in Development Mode (Disable HTTPS)**
-In this setup, Keycloak is started in development mode, which disables the strict HTTPS requirement. This allows services such as Trino and Metabase to communicate with Keycloak using HTTP during testing.
-In the docker-compose.yml file, Keycloak is configured with the following command:
-```yml
-keycloak:
-  image: quay.io/keycloak/keycloak:latest
-  container_name: keycloak
-  command: start-dev
-  environment:
-    KEYCLOAK_ADMIN: admin
-    KEYCLOAK_ADMIN_PASSWORD: admin
-    KC_HOSTNAME: 174.129.146.225
-    KC_HOSTNAME_PORT: 8081
-    KC_PROXY: edge
-  ports:
-    - "8081:8080"
-```
-The start-dev command runs Keycloak in development mode, However, the Keycloak UI may still display "HTTPS Required" depending on the realm configuration.
-
+- In this setup, Keycloak is started in development mode, which disables the strict HTTPS requirement. This allows services such as Trino and Metabase to communicate with Keycloak using HTTP during testing.
+- In the docker-compose.yml file, Keycloak is configured with the following command:
+  ```yml
+  keycloak:
+    image: quay.io/keycloak/keycloak:latest
+    container_name: keycloak
+    command: start-dev
+    environment:
+      KEYCLOAK_ADMIN: admin
+      KEYCLOAK_ADMIN_PASSWORD: admin
+      KC_HOSTNAME: 174.129.146.225
+      KC_HOSTNAME_PORT: 8081
+      KC_PROXY: edge
+    ports:
+      - "8081:8080"
+  ```
+- The start-dev command runs Keycloak in development mode, However, the Keycloak UI may still display "HTTPS Required" depending on the realm configuration.
 
 
 <img width="1603" height="851" alt="image" src="https://github.com/user-attachments/assets/6f9bb762-67ae-4917-8afb-4b27985749b8" />
 
 **Note: In this setup, the EC2 instance public IP is 174.129.146.225 and the Keycloak UI is accessible on port 8081. The Keycloak Web UI can be accessed using http://174.129.146.225:8081**
-**Step 2 – Run the following configuration to disable HTTPS and access the Keycloak UI**
 
+**Step 2 – Run the following configuration to disable HTTPS and access the Keycloak UI**
 - Enter the Keycloak Container and Run the following command to access the Keycloak container shell. This allows you to inspect configurations, run commands, or troubleshoot issues inside the container.
   ```bash
   docker exec -it keycloak /bin/bash
@@ -763,6 +760,7 @@ The start-dev command runs Keycloak in development mode, However, the Keycloak U
      /opt/keycloak/bin/kcadm.sh update realms/master -s sslRequired=NONE
      ```
   - This command updates the master realm configuration and disables the mandatory HTTPS requirement.
+    
 **⚠️ Note: Disabling HTTPS should only be done in development or testing environments. In production deployments, HTTPS must be enabled to ensure secure authentication and communication.**
   - Restart Keycloak and trino
     ```
@@ -772,7 +770,6 @@ The start-dev command runs Keycloak in development mode, However, the Keycloak U
 
     <img width="1199" height="525" alt="image" src="https://github.com/user-attachments/assets/ccc2f91c-8826-4647-a5e0-200089fe8fe3" />
 
-    
   - After disabling the HTTPS requirement, the Keycloak Admin Console can be accessed using HTTP.
     - Use the following URL and default credentials to log in:
       ```text
@@ -787,7 +784,7 @@ The start-dev command runs Keycloak in development mode, However, the Keycloak U
       <img width="1676" height="948" alt="image" src="https://github.com/user-attachments/assets/ae461eb4-d3ce-4514-b930-673e3090d2d4" />
 
 **Step 3 – How to access Metabase through Keycloak (SSO)**
-To access Metabase through Keycloak (SSO), the next steps are to create a realm, create a client for Metabase in Keycloak, and configure Metabase to use Keycloak as an OpenID Connect provider.
+- To access Metabase through Keycloak (SSO), the next steps are to create a realm, create a client for Metabase in Keycloak, and configure Metabase to use Keycloak as an OpenID Connect provider.
 - Create a New Realm: Click Manage Realm → Create Realm
   ```
   Realm Name: datawave # You can use any name
