@@ -761,7 +761,7 @@ trino   Up (unhealthy)
 
   <img width="1548" height="941" alt="image" src="https://github.com/user-attachments/assets/5b3630ef-399d-49f6-ada9-5013a72ce071" />
 
-  Note: Note: In this setup, the EC2 instance public IP is 18.232.99.36 and the Metabase UI is accessible on port 3000. The Metabase Web UI can be accessed using http://18.232.99.36:3000
+  Note: Note: In this setup, the EC2 instance public IP is 174.129.146.225 and the Metabase UI is accessible on port 3000. The Metabase Web UI can be accessed using http://174.129.146.225:3000
 
 - When adding Trino in Metabase, you need to fill the connection details so Metabase can send queries to Trino.
 - To connect both MySQL and PostgreSQL through Trino in Metabase, you do not need two separate database connections. You connect Metabase to Trino once, and Trino exposes both catalogs.
@@ -769,7 +769,7 @@ trino   Up (unhealthy)
   | Field                 | Value                                 |
   | --------------------- | ------------------------------------- |
   | **Database Type**     | Trino                                 |
-  | **Host**              |                         |
+  | **Host**              | any_name                      |
   | **Port**              | `8080`                                |
   | **Catalog**           | `postgres` (default starting catalog) |
   | **Schema (optional)** | `public`                              |
@@ -785,20 +785,20 @@ Note: At the end of the query do not use `;` semicolon to run queries through me
 - Run below example SQL Queries
   - Show connected data sources
     ```sql
-    SHOW CATALOGS; 
+    SHOW CATALOGS
     ````
     <img width="589" height="580" alt="image" src="https://github.com/user-attachments/assets/2363bbb7-6802-4392-b4e0-fe19469503e2" />
 
   - Query MySQL
     ```sql
-    SELECT * FROM mysql.shipments.shipments;
+    SELECT * FROM mysql.shipments.shipments
     ```
     <img width="589" height="580" alt="image" src="https://github.com/user-attachments/assets/2f23f388-5b86-4050-8972-a20cec898e41" />
 
 
   - Query PostgreSQL
     ```sql
-    SELECT * FROM postgresql.public.customers;
+    SELECT * FROM postgresql.public.customers
     ```
     <img width="589" height="580" alt="image" src="https://github.com/user-attachments/assets/6c62e533-00ef-434c-a617-8a46e43e5457" />
 
@@ -812,7 +812,7 @@ Note: At the end of the query do not use `;` semicolon to run queries through me
         c.customer_name
     FROM mysql.shipments.shipments s
     JOIN postgresql.public.customers c
-    ON s.customer_id = c.id;
+    ON s.customer_id = c.id
     ```
     <img width="589" height="580" alt="image" src="https://github.com/user-attachments/assets/d1460676-ffe8-4b07-a1c5-a31dff9af26d" />
 
@@ -827,7 +827,7 @@ Note: At the end of the query do not use `;` semicolon to run queries through me
     JOIN postgresql.public.customers c
     ON s.customer_id = c.id
     GROUP BY c.customer_name
-    ORDER BY total_shipments DESC;
+    ORDER BY total_shipments DESC
     ```
     <img width="589" height="580" alt="image" src="https://github.com/user-attachments/assets/55a48ccc-e8e6-42f1-8531-b2fba28ea58f" />
 
