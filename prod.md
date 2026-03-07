@@ -500,7 +500,7 @@ docker logs <container_name> --tail 50
 
   <img width="1548" height="941" alt="image" src="https://github.com/user-attachments/assets/5b3630ef-399d-49f6-ada9-5013a72ce071" />
 
-  Note: Note: In this setup, the EC2 instance public IP is 18.232.99.36 and the Metabase UI is accessible on port 3030. The Metabase Web UI can be accessed using http://18.232.99.36:3030
+  Note: Note: In this setup, the EC2 instance public IP is 18.232.99.36 and the Metabase UI is accessible on port 3000. The Metabase Web UI can be accessed using http://18.232.99.36:3000
 
 - When adding Trino in Metabase, you need to fill the connection details so Metabase can send queries to Trino.
 - To connect both MySQL and PostgreSQL through Trino in Metabase, you do not need two separate database connections. You connect Metabase to Trino once, and Trino exposes both catalogs.
@@ -514,10 +514,9 @@ docker logs <container_name> --tail 50
   | **Schema (optional)** | `public`                              |
   | **Username**          | `admin`                               |
 
-- Now we can run queries through metabase under NEW --> Select SQL_query
+- Now we can run queries through metabase UI under NEW --> Select SQL_query
 
   <img width="1775" height="405" alt="image" src="https://github.com/user-attachments/assets/65874de5-8164-4819-be25-252bf292f93e" />
-
 
 
 
