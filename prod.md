@@ -1,4 +1,4 @@
-# DATAWAVE INDUSTRIES - SQL FEDERATION ARCHITECTURE 
+#  DataWave Industries – SQL Federation Architecture
 
 ## Table of Contents
 
@@ -226,6 +226,7 @@ sql-federation-project
 │
 └── README.md
 ```
+
 ## Directory Explanation
 ### docker-compose.yml
 - Defines all services required for the architecture.
@@ -345,7 +346,7 @@ This directory contains SQL scripts used to initialize the databases when contai
   - Purpose:
     - Allows Trino to query data stored in object storage.
 
-# Docker Networking and Container Communication in SQL Federation Architecture
+## Docker Networking and Container Communication in SQL Federation Architecture
 
 Docker Compose automatically creates an **isolated virtual network** for all services defined in the `docker-compose.yml` file.\ This allows containers to communicate with each other using **service
 names instead of IP addresses**.
@@ -362,7 +363,7 @@ All containers join this network.
 
 ------------------------------------------------------------------------
 
-## How Containers Communicate
+### How Containers Communicate
 
 Inside a Docker network, containers communicate using **DNS-based
 service discovery**.
@@ -386,9 +387,17 @@ container.
 
 ------------------------------------------------------------------------
 
-## Example Service Communication
+### Example Service Communication
 
-Metabase │ ▼ Trino │ ├── MySQL └── PostgreSQL
+```
+Metabase
+   │
+   ▼
+Trino
+   │
+   ├── MySQL
+   └── PostgreSQL
+```
 
 Example connections:
 
@@ -403,7 +412,7 @@ jdbc:postgresql://postgres:5432/logistics
 
 ------------------------------------------------------------------------
 
-## Host vs Container Networking
+### Host vs Container Networking
 
 ### 1. Container-to-Container Communication
 
@@ -427,7 +436,7 @@ Uses **mapped ports**.
 
 Example:
 
-http://`<EC2_PUBLIC_IP>`{=html}:8080
+http://<EC2_PUBLIC_IP>:8080
 
 Used by:
 
@@ -446,7 +455,7 @@ Example port mappings:
 
 ------------------------------------------------------------------------
 
-## Example Docker Compose Networking
+### Example Docker Compose Networking
 
 Example configuration:
 
@@ -464,7 +473,7 @@ All services automatically join the same Docker network.
 
 ------------------------------------------------------------------------
 
-## Inspecting Docker Networks
+### Inspecting Docker Networks
 
 To view Docker networks:
 
@@ -489,7 +498,7 @@ This command shows:
 
 ------------------------------------------------------------------------
 
-## Docker Networking Best Practices
+### Docker Networking Best Practices
 
 Use service names instead of container IP addresses.
 
@@ -512,7 +521,7 @@ Separate environments using networks when deploying to production.
 
 ------------------------------------------------------------------------
 
-## Summary
+### Summary
 
 Docker networking enables seamless communication between containers
 without manual configuration.\
@@ -525,9 +534,9 @@ This architecture simplifies deployment and ensures that services remain
 loosely coupled and easily scalable.
 
 
-# Project Execution
+## Project Execution
 
-## Setup Instructions & User Guide
+### Setup Instructions & User Guide
 
 **Step 1 — How to install dependencies**
 - Prerequisites
@@ -694,6 +703,7 @@ docker logs <container_name> --tail 50
   | **Username**          | `admin`                               |
 
 - Now we can run queries through metabase UI under NEW --> Select SQL_query
+Note: At the end of the query do not use `;` semicolon to run queries through metabase
 
   <img width="1775" height="405" alt="image" src="https://github.com/user-attachments/assets/65874de5-8164-4819-be25-252bf292f93e" />
 
@@ -787,7 +797,7 @@ keycloak:
   ports:
     - "8081:8080"
 ```
-The start-dev command runs Keycloak in development mode, But still you will see HTTPS Required 
+The start-dev command runs Keycloak in development mode, However, the Keycloak UI may still display "HTTPS Required" depending on the realm configuration.
 
 
 
@@ -823,7 +833,7 @@ The start-dev command runs Keycloak in development mode, But still you will see 
   - Restart Keycloak and trino
     ```
     docker restart keycloak
-    docker restart keycloak
+    docker restart trino
     ```
 
     <img width="1199" height="525" alt="image" src="https://github.com/user-attachments/assets/ccc2f91c-8826-4647-a5e0-200089fe8fe3" />
@@ -963,13 +973,13 @@ To access Metabase through Keycloak (SSO), the next steps are to create a realm,
         ```
 
 
-# Troubleshooting Steps
+## Troubleshooting Guide
 
 During the implementation of the SQL Federation Architecture several issues were encountered while configuring Trino, connecting Metabase to the federation engine, integrating Keycloak for authentication, and configuring OAuth2 Proxy for SSO. This section documents common problems and their solutions.
 
 ------------------------------------------------------------------------
 
-## 1. Trino Container Shows Unhealthy Status
+### 1. Trino Container Shows Unhealthy Status
 
 **Symptom**
 
@@ -1000,7 +1010,7 @@ then Trino started successfully.
 
 ------------------------------------------------------------------------
 
-## 2. Trino Cannot Connect to MySQL or PostgreSQL
+### 2. Trino Cannot Connect to MySQL or PostgreSQL
 
 **Error**
 
@@ -1036,7 +1046,7 @@ Restart Trino:
 
 ------------------------------------------------------------------------
 
-## 3. Trino Catalog Not Visible
+### 3. Trino Catalog Not Visible
 
 **Symptom**
 
@@ -1056,7 +1066,7 @@ Restart Trino.
 
 ------------------------------------------------------------------------
 
-## 4. Metabase Cannot Connect to Trino
+### 4. Metabase Cannot Connect to Trino
 
 **Cause**
 
@@ -1076,7 +1086,7 @@ Use:
 
 ------------------------------------------------------------------------
 
-## 5. Metabase Cannot See Tables
+### 5. Metabase Cannot See Tables
 
 Use full catalog names.
 
@@ -1088,7 +1098,7 @@ Example:
 
 ------------------------------------------------------------------------
 
-## 6. Semicolon Not Required in Metabase SQL Editor
+### 6. Semicolon Not Required in Metabase SQL Editor
 
 Incorrect:
 
@@ -1102,7 +1112,7 @@ Metabase automatically executes queries and does not require `;`.
 
 ------------------------------------------------------------------------
 
-## 7. OAuth2 Proxy Cookie Secret Error
+### 7. OAuth2 Proxy Cookie Secret Error
 
 **Error**
 
@@ -1120,7 +1130,7 @@ Example:
 
 ------------------------------------------------------------------------
 
-## 8. OAuth2 Proxy Cannot Reach Keycloak
+### 8. OAuth2 Proxy Cannot Reach Keycloak
 
 **Error**
 
@@ -1134,7 +1144,7 @@ Restart services:
 
 ------------------------------------------------------------------------
 
-## 9. Invalid Client Credentials
+### 9. Invalid Client Credentials
 
 **Error**
 
@@ -1151,7 +1161,7 @@ Update docker-compose and restart oauth2-proxy.
 
 ------------------------------------------------------------------------
 
-## 10. Keycloak Realm Does Not Exist
+### 10. Keycloak Realm Does Not Exist
 
 List realms:
 
@@ -1165,7 +1175,7 @@ Example:
 
 ------------------------------------------------------------------------
 
-## 11. HTTPS Required Error in Keycloak
+### 11. HTTPS Required Error in Keycloak
 
 Enter container:
 
@@ -1185,7 +1195,7 @@ Restart:
 
 ------------------------------------------------------------------------
 
-## 12. Authentication Loop
+### 12. Authentication Loop
 
 Clear browser cookies or open incognito window.
 
@@ -1195,7 +1205,7 @@ Ensure:
 
 ------------------------------------------------------------------------
 
-## 13. Docker Troubleshooting Commands
+### 13. Docker Troubleshooting Commands
 
 Check containers:
 
@@ -1237,7 +1247,7 @@ Start stack:
 
 ------------------------------------------------------------------------
 
-## 14. Verify Trino CLI
+### 14. Verify Trino CLI
 
     docker exec -it trino trino
 
@@ -1249,7 +1259,7 @@ Run:
 
 ------------------------------------------------------------------------
 
-## 15. Verify Container Networking
+### 15. Verify Container Networking
 
     docker exec -it trino ping mysql
     docker exec -it trino ping postgres
@@ -1257,7 +1267,7 @@ Run:
 
 ------------------------------------------------------------------------
 
-## Summary
+### Summary
 
 These troubleshooting steps help diagnose:
 
@@ -1268,7 +1278,7 @@ These troubleshooting steps help diagnose:
 -   Docker container networking
 
 
-# Improvements and Conclusion
+## Improvements and Conclusion
 
 While the current SQL Federation architecture successfully demonstrates
 unified querying across heterogeneous data sources, authentication with
@@ -1278,7 +1288,7 @@ production deployments.
 
 ------------------------------------------------------------------------
 
-## Future Improvements
+### Future Improvements
 
 ### 1. CI/CD Pipeline Implementation
 
@@ -1428,7 +1438,7 @@ Benefits:
 
 ------------------------------------------------------------------------
 
-# Conclusion
+## Conclusion
 
 This project demonstrates the design and implementation of a **modern
 SQL Federation architecture** capable of querying multiple heterogeneous
