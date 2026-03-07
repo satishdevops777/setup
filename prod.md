@@ -346,6 +346,187 @@ This directory contains SQL scripts used to initialize the databases when contai
 
 
 
+# Docker Networking and Container Communication
+
+Docker Compose automatically creates an **isolated virtual network** for
+all services defined in the `docker-compose.yml` file.\
+This allows containers to communicate with each other using **service
+names instead of IP addresses**.
+
+When the platform is started with:
+
+docker-compose up -d
+
+Docker automatically creates a network similar to:
+
+sql_federation_architecture_default
+
+All containers join this network.
+
+------------------------------------------------------------------------
+
+## How Containers Communicate
+
+Inside a Docker network, containers communicate using **DNS-based
+service discovery**.
+
+Instead of container IP addresses (which may change), services use the
+**service name defined in docker-compose.yml**.
+
+Example:
+
+Trino connects to MySQL using:
+
+jdbc:mysql://mysql:3306/shipments
+
+Where:
+
+-   mysql → Docker service name
+-   3306 → MySQL container port
+
+Docker automatically resolves the hostname `mysql` to the correct
+container.
+
+------------------------------------------------------------------------
+
+## Example Service Communication
+
+Metabase │ ▼ Trino │ ├── MySQL └── PostgreSQL
+
+Example connections:
+
+Metabase → Trino\
+http://trino:8080
+
+Trino → MySQL\
+jdbc:mysql://mysql:3306/shipments
+
+Trino → PostgreSQL\
+jdbc:postgresql://postgres:5432/logistics
+
+------------------------------------------------------------------------
+
+## Host vs Container Networking
+
+### 1. Container-to-Container Communication
+
+Uses **service names**.
+
+Example:
+
+http://trino:8080
+
+Used by:
+
+-   Metabase → Trino
+-   Trino → MySQL
+-   Trino → PostgreSQL
+
+------------------------------------------------------------------------
+
+### 2. Host-to-Container Communication
+
+Uses **mapped ports**.
+
+Example:
+
+http://`<EC2_PUBLIC_IP>`{=html}:8080
+
+Used by:
+
+User Browser → Trino\
+User Browser → Metabase\
+User Browser → Keycloak
+
+Example port mappings:
+
+  Service        Container Port   Host Port
+  -------------- ---------------- -----------
+  Trino          8080             8080
+  Metabase       3000             3000
+  Keycloak       8080             8081
+  OAuth2 Proxy   4180             4180
+
+------------------------------------------------------------------------
+
+## Example Docker Compose Networking
+
+Example configuration:
+
+services:
+
+trino: image: trinodb/trino ports: - "8080:8080"
+
+mysql: image: mysql:8 ports: - "3306:3306"
+
+postgres: image: postgres:14 ports: - "5432:5432"
+
+metabase: image: metabase/metabase ports: - "3000:3000"
+
+All services automatically join the same Docker network.
+
+------------------------------------------------------------------------
+
+## Inspecting Docker Networks
+
+To view Docker networks:
+
+docker network ls
+
+Example output:
+
+bridge\
+host\
+none\
+sql_federation_architecture_default
+
+To inspect the project network:
+
+docker network inspect sql_federation_architecture_default
+
+This command shows:
+
+-   Connected containers
+-   Container IP addresses
+-   Network configuration
+
+------------------------------------------------------------------------
+
+## Docker Networking Best Practices
+
+Use service names instead of container IP addresses.
+
+IP addresses may change when containers restart.
+
+Use environment variables for connection configuration.
+
+Example:
+
+DB_HOST=mysql\
+DB_PORT=3306
+
+Expose only required ports.
+
+Only expose ports that must be accessed externally.
+
+Use internal container communication where possible.
+
+Separate environments using networks when deploying to production.
+
+------------------------------------------------------------------------
+
+## Summary
+
+Docker networking enables seamless communication between containers
+without manual configuration.\
+By using Docker Compose networking features such as **service discovery
+and shared networks**, the SQL Federation platform allows services like
+Trino, Metabase, MySQL, and PostgreSQL to communicate reliably while
+remaining isolated from the host environment.
+
+This architecture simplifies deployment and ensures that services remain
+loosely coupled and easily scalable.
+
 
 # Project Execution
 
