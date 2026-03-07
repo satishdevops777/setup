@@ -776,7 +776,7 @@ The start-dev command runs Keycloak in development mode, However, the Keycloak U
     - Use the following URL and default credentials to log in:
       ```text
       # Keycloak Web UI URL
-      http://18.232.99.36:8081 
+      http://174.129.146.225:8081 
 
       # Username and Password
       Username: admin
