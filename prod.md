@@ -602,7 +602,7 @@ trino   Up (unhealthy)
   
   <img width="1091" height="300" alt="image" src="https://github.com/user-attachments/assets/12609155-02d8-48ab-8e77-fc97372881de" />
 
-  Note: Note: In this setup, the EC2 instance public IP is 18.232.99.36 and the Trino SQL Federation service is accessible on port 8080. The Trino Web UI can be accessed using http://18.232.99.36:8080
+  Note: In this setup, the EC2 instance public IP is 174.129.146.225 and the Trino SQL Federation service is accessible on port 8080. The Trino Web UI can be accessed using http://174.129.146.225:8080
 
 - The Trino UI is mainly used to monitor query execution, cluster status, and query history, while SQL queries are executed through external tools such as Metabase, which connects to Trino and allows users to run queries and visualize federated data
 
@@ -618,7 +618,7 @@ trino   Up (unhealthy)
 
   <img width="1548" height="941" alt="image" src="https://github.com/user-attachments/assets/5b3630ef-399d-49f6-ada9-5013a72ce071" />
 
-  Note: Note: In this setup, the EC2 instance public IP is 174.129.146.225 and the Metabase UI is accessible on port 3000. The Metabase Web UI can be accessed using http://174.129.146.225:3000
+  Note: In this setup, the EC2 instance public IP is 174.129.146.225 and the Metabase UI is accessible on port 3000. The Metabase Web UI can be accessed using http://174.129.146.225:3000
 
 - When adding Trino in Metabase, you need to fill the connection details so Metabase can send queries to Trino.
 - To connect both MySQL and PostgreSQL through Trino in Metabase, you do not need two separate database connections. You connect Metabase to Trino once, and Trino exposes both catalogs.
@@ -724,6 +724,9 @@ keycloak:
   environment:
     KEYCLOAK_ADMIN: admin
     KEYCLOAK_ADMIN_PASSWORD: admin
+    KC_HOSTNAME: 174.129.146.225
+    KC_HOSTNAME_PORT: 8081
+    KC_PROXY: edge
   ports:
     - "8081:8080"
 ```
@@ -733,7 +736,7 @@ The start-dev command runs Keycloak in development mode, However, the Keycloak U
 
 <img width="1603" height="851" alt="image" src="https://github.com/user-attachments/assets/6f9bb762-67ae-4917-8afb-4b27985749b8" />
 
-**Note: Note: In this setup, the EC2 instance public IP is 174.129.146.225 and the Keycloak UI is accessible on port 8081. The Keycloak Web UI can be accessed using http://174.129.146.225:8081**
+**Note: In this setup, the EC2 instance public IP is 174.129.146.225 and the Keycloak UI is accessible on port 8081. The Keycloak Web UI can be accessed using http://174.129.146.225:8081**
 **Step 2 – Run the following configuration to disable HTTPS and access the Keycloak UI**
 
 - Enter the Keycloak Container and Run the following command to access the Keycloak container shell. This allows you to inspect configurations, run commands, or troubleshoot issues inside the container.
@@ -874,19 +877,25 @@ To access Metabase through Keycloak (SSO), the next steps are to create a realm,
       - Add OAuth2 Proxy Container: Update docker-compose.yml.
         ```yml
         oauth2-proxy:
-        image: quay.io/oauth2-proxy/oauth2-proxy:v7.6.0
-        container_name: oauth2-proxy
-        ports:
-          - "4180:4180"
-        environment:
-          OAUTH2_PROXY_PROVIDER: oidc
-          OAUTH2_PROXY_CLIENT_ID: metabase
-          OAUTH2_PROXY_CLIENT_SECRET: <CLIENT_SECRET>    # Replace with Secret Value
-          OAUTH2_PROXY_COOKIE_SECRET: random_cookie_secret
-          OAUTH2_PROXY_OIDC_ISSUER_URL: http://keycloak:8080/realms/datawave
-          OAUTH2_PROXY_REDIRECT_URL: http://174.129.146.225:4180/oauth2/callback
-          OAUTH2_PROXY_UPSTREAMS: http://metabase:3000
-          OAUTH2_PROXY_HTTP_ADDRESS: 0.0.0.0:4180
+          image: quay.io/oauth2-proxy/oauth2-proxy:v7.6.0
+          container_name: oauth2-proxy
+          ports:
+            - "4180:4180"
+          environment:
+            OAUTH2_PROXY_PROVIDER: oidc
+            OAUTH2_PROXY_CLIENT_ID: metabase
+            OAUTH2_PROXY_CLIENT_SECRET: IPlMbZopeh7VMDCR7tZ0ENveFQShPWsZ
+            OAUTH2_PROXY_COOKIE_SECRET: e168b6db76fdffc9d9eced4412709443
+            OAUTH2_PROXY_COOKIE_SECURE: "false"
+            OAUTH2_PROXY_EMAIL_DOMAINS: "*"
+            OAUTH2_PROXY_OIDC_ISSUER_URL: http://174.129.146.225:8081/realms/datawave
+            OAUTH2_PROXY_INSECURE_OIDC_SKIP_ISSUER_VERIFICATION: "true"
+            OAUTH2_PROXY_REDIRECT_URL: http://174.129.146.225:4180/oauth2/callback
+            OAUTH2_PROXY_UPSTREAMS: http://metabase:3000
+            OAUTH2_PROXY_HTTP_ADDRESS: 0.0.0.0:4180
+          depends_on:
+            - keycloak
+            - metabase
         ```
     - Access Metabase through OAuth Proxy
       - Instead of opening:
