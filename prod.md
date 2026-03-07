@@ -538,6 +538,63 @@ loosely coupled and easily scalable.
 
 ### Setup Instructions & User Guide
 
+### Architecture Diagram – SQL Federation Platform (Trino, Metabase, Postgres and Mysql)
+
+```
+        
+                                             ┌──────────────────────────────┐
+                                             │            User              │
+                                             │  (Browser / BI Analyst)      │
+                                             └───────────────┬──────────────┘
+                                                             │
+                                                             │ HTTP
+                                                             ▼
+                                             ┌──────────────────────────────┐
+                                             │           Metabase           │
+                                             │     BI / Analytics Layer     │
+                                             │        Port: 3000            │
+                                             └───────────────┬──────────────┘
+                                                             │
+                                                             │ SQL Queries
+                                                             ▼
+                                             ┌──────────────────────────────┐
+                                             │            Trino             │
+                                             │      SQL Federation Engine   │
+                                             │        Port: 8080            │
+                                             └───────────────┬──────────────┘
+                                                             │
+                                             ┌───────────────┴───────────────┐
+                                             │                               │
+                                             ▼                               ▼
+                               ┌──────────────────────────┐     ┌──────────────────────────┐
+                               │          MySQL           │     │        PostgreSQL        │
+                               │   Operational Database   │     │    Relational Database   │
+                               │        Port: 3306        │     │        Port: 5432        │
+                               └──────────────────────────┘     └──────────────────────────┘
+                    
+        
+                        Docker Network
+                sql_federation_architecture_default
+```
+### Docker Container Architecture
+```
+Docker Host (EC2 Instance)
+│
+├── trino container
+│      Port: 8080
+│
+├── metabase container
+│      Port: 3000
+│
+├── mysql container
+│      Port: 3306
+│
+├── postgres container
+│      Port: 5432
+│
+└── docker network
+       sql_federation_architecture_default
+```
 **Step 1 — How to install dependencies**
 - Prerequisites
 - Before starting, ensure:
@@ -574,7 +631,8 @@ git --version git #Output --> Check Git version. version 2.x.x
 ```
 git clone https://gitlab.com/satishdevops777/sql_federation_architecture.git && cd sql_federation_architecture
 ```
-<img width="1725" height="288" alt="image" src="https://github.com/user-attachments/assets/68a33999-6f01-449f-9837-fd5575dc07b7" />
+<img width="1731" height="272" alt="image" src="https://github.com/user-attachments/assets/ad58f9db-3903-487b-868f-f8c29b54dba1" />
+
 
 
 **Step 3 — How to Start the Platform**
@@ -582,7 +640,7 @@ Start all services using Docker Compose.
 ```bash
 docker-compose up -d
 ```
-<img width="1908" height="223" alt="image" src="https://github.com/user-attachments/assets/d56e1d10-995c-4a72-bd10-fc3f3ab60215" />
+<img width="1907" height="253" alt="image" src="https://github.com/user-attachments/assets/cebb401f-394b-431b-8029-df72ef0f263e" />
 
 
 
@@ -594,8 +652,12 @@ docker ps
 # Check logs of a specific container
 docker logs <container_name> --tail 50
 ```
-<img width="1919" height="511" alt="image" src="https://github.com/user-attachments/assets/ad9bef7f-dce4-422d-9aaa-2a62064d9530" />
+<img width="1918" height="838" alt="image" src="https://github.com/user-attachments/assets/34990ebd-9e6a-405c-861f-e7a3b5520b5b" />
 
+```
+trino   Up (unhealthy)
+```
+- This usually happens because Trino requires some time (10–20 seconds) to fully initialize its connectors and internal services during startup. During this initialization phase, the Docker healthcheck endpoint may temporarily return HTTP 503, which causes Docker to mark the container as unhealthy.
 
 **Step 5 - How to Access Service URLs**
 - Service Access
@@ -616,57 +678,68 @@ docker logs <container_name> --tail 50
   ```
   <img width="1073" height="69" alt="image" src="https://github.com/user-attachments/assets/d55a90ca-2d3e-47e0-9017-5f587f0a1da7" />
 - Run below example SQL Queries
-  - Show connected data sources
-    ```sql
-    SHOW CATALOGS; 
-    ````
-    <img width="948" height="250" alt="image" src="https://github.com/user-attachments/assets/92b60b81-2f8e-46d2-a435-439d491d8b5f" />
 
-  - Query MySQL
-    ```sql
-    SELECT * FROM mysql.shipments.shipments;
-    ```
-    <img width="948" height="250" alt="image" src="https://github.com/user-attachments/assets/fe4d40a1-4a13-48f1-9e26-dce687b000b7" />
+**Show connected data sources**
+  ```sql
+  SHOW CATALOGS; 
+  ````
+  <img width="948" height="250" alt="image" src="https://github.com/user-attachments/assets/92b60b81-2f8e-46d2-a435-439d491d8b5f" />
 
-  - Query PostgreSQL
-    ```sql
-    SELECT * FROM postgresql.public.customers;
-    ```
-    <img width="948" height="250" alt="image" src="https://github.com/user-attachments/assets/d3b34d9f-08fc-4bb7-a9e5-759f932a6c97" />
 
-    
-    
-  - Cross-database federation query with join
-    ```sql
-    SELECT
-        s.shipment_id,
-        s.product_name,
-        c.customer_name
-    FROM mysql.shipments.shipments s
-    JOIN postgresql.public.customers c
-    ON s.customer_id = c.id;
-    ```
-    <img width="948" height="250" alt="image" src="https://github.com/user-attachments/assets/69e8a3ed-e1dc-45a5-9fba-0ca3491505f7" />
+**Query MySQL**
+  ```sql
+  SELECT * FROM mysql.shipments.shipments;
+  ```
+  <img width="948" height="250" alt="image" src="https://github.com/user-attachments/assets/fe4d40a1-4a13-48f1-9e26-dce687b000b7" />
+
+
+**Query PostgreSQL**
+  ```sql
+  SELECT * FROM postgresql.public.customers;
+  ```
+  <img width="948" height="250" alt="image" src="https://github.com/user-attachments/assets/d3b34d9f-08fc-4bb7-a9e5-759f932a6c97" />
 
     
-  - Analytical query
-    ```sql
-    SELECT
-        c.customer_name,
-        COUNT(s.shipment_id) AS total_shipments
-    FROM mysql.shipments.shipments s
-    JOIN postgresql.public.customers c
-    ON s.customer_id = c.id
-    GROUP BY c.customer_name
-    ORDER BY total_shipments DESC;
-    ```
-    <img width="948" height="250" alt="image" src="https://github.com/user-attachments/assets/59a38236-7ee0-4233-9c02-4db368342df1" />
+
+**Cross-database federation query with join**
+  ```sql
+  SELECT
+      s.shipment_id,
+      s.product_name,
+      c.customer_name
+  FROM mysql.shipments.shipments s
+  JOIN postgresql.public.customers c
+  ON s.customer_id = c.id;
+  ```
+  <img width="948" height="250" alt="image" src="https://github.com/user-attachments/assets/69e8a3ed-e1dc-45a5-9fba-0ca3491505f7" />
+
+    
+
+**Analytical query**
+  ```sql
+  SELECT
+      c.customer_name,
+  COUNT(s.shipment_id) AS total_shipments
+  FROM mysql.shipments.shipments s
+  JOIN postgresql.public.customers c
+  ON s.customer_id = c.id
+  GROUP BY c.customer_name
+  ORDER BY total_shipments DESC;
+  ```
+  <img width="948" height="250" alt="image" src="https://github.com/user-attachments/assets/59a38236-7ee0-4233-9c02-4db368342df1" />
 
 
 - Run below command to access SQL Federation Engine UI (trino)
-- Open the URL in browser 
-  ```test
-  http://18.232.99.36:8080/
+- Open the URL in browser
+  ```MARKDOWN
+  Note: Replace <EC2_PUBLIC_IP> with your EC2 instance's public IP address. 
+  In this setup, Trino is running on an EC2 instance and can be accessed using:
+  
+  http://<EC2_PUBLIC_IP>:8080
+  ```
+- URL
+  ```
+  http://174.129.146.225:8080 
   ```
 - Trino requires a user name to identify the query executor. In this setup authentication is not enabled, so any username can be provided to access the Trino UI.
   
@@ -683,7 +756,7 @@ docker logs <container_name> --tail 50
 - Metabase is used as a BI and query interface to execute SQL queries against the Trino SQL Federation engine.
 - Access Metabase using the following URL:
   ```text
-  http://18.232.99.36:3000
+  http://174.129.146.225:3000
   ```
 
   <img width="1548" height="941" alt="image" src="https://github.com/user-attachments/assets/5b3630ef-399d-49f6-ada9-5013a72ce071" />
@@ -696,7 +769,7 @@ docker logs <container_name> --tail 50
   | Field                 | Value                                 |
   | --------------------- | ------------------------------------- |
   | **Database Type**     | Trino                                 |
-  | **Host**              | `18.232.99.36`                        |
+  | **Host**              |                         |
   | **Port**              | `8080`                                |
   | **Catalog**           | `postgres` (default starting catalog) |
   | **Schema (optional)** | `public`                              |
@@ -705,7 +778,7 @@ docker logs <container_name> --tail 50
 - Now we can run queries through metabase UI under NEW --> Select SQL_query
 Note: At the end of the query do not use `;` semicolon to run queries through metabase
 
-  <img width="1775" height="405" alt="image" src="https://github.com/user-attachments/assets/65874de5-8164-4819-be25-252bf292f93e" />
+  <img width="1000" height="200" alt="image" src="https://github.com/user-attachments/assets/65874de5-8164-4819-be25-252bf292f93e" />
 
 
 
