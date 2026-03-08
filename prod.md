@@ -498,7 +498,8 @@ Start all services using Docker Compose.
 ```bash
 docker-compose up -d
 ```
-<img width="1907" height="253" alt="image" src="https://github.com/user-attachments/assets/cebb401f-394b-431b-8029-df72ef0f263e" />
+<img width="1918" height="395" alt="image" src="https://github.com/user-attachments/assets/778122b2-7583-49d3-a861-a2cd2e0342ad" />
+
 
 
 
