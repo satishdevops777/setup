@@ -805,3 +805,77 @@ trino-cluster/
 └── catalog/
     └── postgres.properties
 ```
+
+
+### Keycloak
+
+
+
+| Mode      | Purpose          |
+| --------- | ---------------- |
+| start-dev | development mode |
+| start     | production mode  |
+
+start-dev:
+- no TLS required
+- easier configuration
+- auto database setup
+- Used for local testing.
+- 
+
+A realm is a security domain
+- Client ID: trino or Client ID: trino
+- Redirect URL: http://174.129.146.225:8080/ui/* OR http://174.129.146.225:3000/*
+- Trino Configuration Example
+  ```
+  http-server.authentication.type=oauth2
+  http-server.authentication.oauth2.issuer=http://174.129.146.225:8081/realms/datawave
+  http-server.authentication.oauth2.client-id=trino
+  http-server.authentication.oauth2.client-secret=<secret>
+  http-server.authentication.oauth2.principal-field=preferred_username
+  ```
+  - How Applications Connect to Keycloak
+    ```
+    http://174.129.146.225:8081/realms/datawave/.well-known/openid-configuration #Applications use the OpenID discovery endpoint
+    ```
+  - This provides:
+      - authorization endpoint
+      - token endpoint
+      - public keys
+    ```
+            User
+             │
+             ▼
+            Metabase / Trino
+             │
+             ▼
+            Keycloak (SSO)
+             │
+             ▼
+            Identity verification
+    ```
+- Keycloak acts as an identity provider. Applications like Trino or Metabase redirect users to Keycloak for authentication using OAuth2 or OpenID Connect. After login, Keycloak returns an access token that the application validates to establish the user session.
+```
+        User Browser
+              │
+              ▼
+        Trino UI
+              │
+        Redirect
+              ▼
+        Keycloak Login
+              │
+        User Authentication
+              │
+        Keycloak returns Authorization Code
+              │
+        Trino exchanges code for token
+              │
+        Token validated
+              │
+        Session created
+              ▼
+        User accesses Trino
+```
+- When a user accesses Trino, the server redirects the browser to Keycloak for authentication. After successful login, Keycloak returns an authorization code. Trino exchanges this code for an access token, validates the token, extracts the username from the token claims, and creates a session for the authenticated user.
+- The client secret is a credential used by the application to authenticate itself with the identity provider. During the OAuth2 token exchange, Trino sends the client ID and client secret to Keycloak to securely obtain an access token.
