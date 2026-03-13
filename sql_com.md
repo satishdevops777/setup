@@ -414,3 +414,394 @@ Container
   ```
 - Because PostgreSQL runs all .sql files in that directory.
 - Docker mounts ./init-db/postgres-init.sql from the host and exposes it inside the container as /docker-entrypoint-initdb.d/init.sql, which PostgreSQL automatically executes during initialization
+
+### config.properties
+- In Trino, the config.properties file is the main server configuration file. It defines how the Trino node behaves and how the cluster works.
+
+```
+############################################
+# TRINO SERVER CONFIGURATION
+# Main configuration file for Trino nodes
+############################################
+
+
+############################################
+# NODE ROLE CONFIGURATION
+############################################
+
+# Defines whether this node acts as the coordinator.
+# The coordinator receives queries, plans execution,
+# schedules tasks on workers, and returns results.
+coordinator=true
+
+# Allows the coordinator to also execute query tasks.
+# Usually true for single-node or development setups.
+# In production clusters this is typically set to false.
+node-scheduler.include-coordinator=true
+
+
+############################################
+# HTTP SERVER CONFIGURATION
+############################################
+
+# Port on which the Trino server listens for requests.
+# Clients, CLI, and UI connect to this port.
+http-server.http.port=8080
+
+# Enable HTTPS communication (optional).
+# http-server.https.enabled=false
+
+# HTTPS port if HTTPS is enabled.
+# http-server.https.port=8443
+
+
+############################################
+# CLUSTER DISCOVERY CONFIGURATION
+############################################
+
+# Enables the discovery service.
+# Workers use this service to register with the coordinator.
+discovery-server.enabled=true
+
+# URI where the discovery service is available.
+# Workers use this endpoint to locate the coordinator.
+# In Kubernetes this would typically be the coordinator service.
+discovery.uri=http://localhost:8080
+
+
+############################################
+# QUERY MEMORY LIMITS
+############################################
+
+# Maximum memory a query can use across the entire cluster.
+# If exceeded, the query will fail.
+query.max-memory=2GB
+
+# Maximum memory a query can use on a single node.
+# Prevents a single worker from running out of memory.
+query.max-memory-per-node=512MB
+
+# Maximum total memory including revocable memory.
+# Helps protect the cluster from excessive memory usage.
+# query.max-total-memory=4GB
+
+
+############################################
+# QUERY EXECUTION LIMITS
+############################################
+
+# Maximum runtime allowed for a query.
+# Queries running longer than this will be terminated.
+# query.max-run-time=1h
+
+# Maximum number of stages allowed in a query plan.
+# Helps prevent overly complex queries.
+# query.max-stage-count=150
+
+# Number of completed queries kept in history.
+# query.max-history=100
+
+
+############################################
+# TASK EXECUTION SETTINGS
+############################################
+
+# Number of concurrent drivers per task.
+# Controls parallelism during execution.
+# task.concurrency=4
+
+# Maximum worker threads used for task execution.
+# task.max-worker-threads=16
+
+
+############################################
+# DATA EXCHANGE SETTINGS
+############################################
+
+# Number of threads used for exchanging data
+# between worker nodes during query execution.
+# exchange.client-threads=25
+
+# Maximum buffer size used during data exchange.
+# exchange.max-buffer-size=32MB
+
+
+############################################
+# NODE SCHEDULER SETTINGS
+############################################
+
+# Maximum number of splits (data partitions)
+# that can be scheduled on a node.
+# node-scheduler.max-splits-per-node=100
+
+# Maximum number of pending splits per task.
+# node-scheduler.max-pending-splits-per-task=10
+
+
+############################################
+# SPILL TO DISK SETTINGS
+############################################
+
+# Enables spilling intermediate data to disk
+# when queries exceed available memory.
+# spill-enabled=true
+
+# Directory where spilled data is stored.
+# spiller-spill-path=/data/trino/spill
+
+
+############################################
+# FAULT TOLERANCE / RETRY SETTINGS
+############################################
+
+# Retry policy for failed tasks.
+# TASK retry allows retrying individual failed tasks.
+# retry-policy=TASK
+```
+
+### Worker Node - config.properties
+```
+############################################
+# TRINO WORKER CONFIGURATION
+# Configuration for worker nodes
+############################################
+
+
+############################################
+# NODE ROLE
+############################################
+
+# This node is a worker, not a coordinator.
+# Workers execute query tasks assigned by the coordinator.
+coordinator=false
+
+
+############################################
+# HTTP SERVER CONFIGURATION
+############################################
+
+# Port where the Trino worker listens.
+# The coordinator communicates with workers using this port.
+http-server.http.port=8080
+
+
+############################################
+# CLUSTER DISCOVERY
+############################################
+
+# URI of the coordinator discovery service.
+# Workers use this endpoint to register themselves with the coordinator.
+# In Kubernetes, this would typically be the coordinator service name.
+discovery.uri=http://trino-coordinator:8080
+
+
+############################################
+# QUERY MEMORY LIMITS
+############################################
+
+# Maximum memory a query can use on this worker node.
+# Helps protect the node from running out of memory.
+query.max-memory-per-node=512MB
+
+# Maximum total memory a query can use on this worker node,
+# including revocable memory.
+query.max-total-memory-per-node=1GB
+
+
+############################################
+# TASK EXECUTION SETTINGS
+############################################
+
+# Number of parallel drivers per task.
+# Controls how much parallelism happens within each task.
+task.concurrency=4
+
+# Maximum number of worker threads used to process tasks.
+task.max-worker-threads=16
+
+
+############################################
+# DATA EXCHANGE SETTINGS
+############################################
+
+# Threads used to exchange data between workers.
+exchange.client-threads=25
+
+# Maximum buffer size for data exchange between nodes.
+exchange.max-buffer-size=32MB
+
+
+############################################
+# SPILL TO DISK SETTINGS (Optional)
+############################################
+
+# Allows queries to spill data to disk if memory is insufficient.
+spill-enabled=true
+
+# Directory where spilled data will be stored.
+spiller-spill-path=/data/trino/spill
+
+
+############################################
+# NODE SCHEDULER SETTINGS
+############################################
+
+# Maximum number of data splits processed by this node.
+node-scheduler.max-splits-per-node=100
+
+# Maximum pending splits allowed per task.
+node-scheduler.max-pending-splits-per-task=10
+```
+
+- By default, Trino does not enforce authentication. The username entered in the UI is only used to identify the query user. Real authentication must be configured explicitly using mechanisms such as password authentication, OAuth, LDAP, or Kerberos.
+```
+http-server.authentication.type=PASSWORD
+password-authenticator.name=file
+
+/etc/trino/password-authenticator.properties
+    password-authenticator.name=file
+    file.password-file=/etc/trino/password.db
+
+/etc/trino/password.db and hashed password like below
+    admin:$2y$10$2JYy6YH9Yb9hO6KX1CqM6eM8kS4mZ0yA4x6b7K3N4fT5v8g9q1aBC
+    user1:$2y$10$A9uYp7X4J6Wb9LQ1s3d6cZ2eN0rV8P5K7tY4qF1s2b6D9gH3mC8pO
+
+htpasswd -nbB admin password
+
+docker restart trino
+
+```
+- Yes. Trino supports password authentication using a file-based password authenticator. Users and hashed passwords are stored in a password file, and the coordinator validates credentials during login.
+- Applications like Trino and Metabase redirect users to Keycloak for authentication. After the user logs in, Keycloak creates a browser session. When the user accesses another application, Keycloak detects the existing session and issues a token without prompting for login again.
+
+### What jvm.config Controls
+- This file defines:
+    - JVM memory allocation
+    - garbage collection settings
+    - JVM performance tuning
+    - debugging options
+It directly affects Trino performance and stability.
+- We need jvm.config in Trino because Trino runs on the Java Virtual Machine (JVM). This file tells the JVM how much memory to use and how to manage resources when running Trino. Without proper JVM settings, Trino may run slowly, crash, or run out of memory.
+- Heap memory stores Java objects created during query execution, such as query plans, task objects, metadata, intermediate results, and buffers used to process data.
+
+```
+########################################################
+# TRINO JVM CONFIGURATION
+# This file contains JVM startup parameters used to run
+# the Trino server. These settings control memory usage,
+# garbage collection, and JVM performance.
+########################################################
+
+# Run JVM in server mode.
+# This mode is optimized for long-running server applications
+# like Trino and provides better performance.
+-server
+
+
+########################################################
+# HEAP MEMORY CONFIGURATION
+########################################################
+
+# Maximum heap memory size.
+# This defines the maximum amount of RAM the JVM can use
+# to store Java objects such as query execution data,
+# intermediate results, metadata objects, and buffers.
+#
+# Example:
+# -Xmx16G means JVM can use up to 16 GB RAM.
+#
+# Important rule:
+# Heap size should typically be 70–80% of system memory.
+-Xmx16G
+
+
+########################################################
+# GARBAGE COLLECTION SETTINGS
+########################################################
+
+# Use the G1 Garbage Collector.
+# G1GC is recommended for large heap sizes and
+# low pause time applications like Trino.
+#
+# It helps reduce long garbage collection pauses
+# during heavy query workloads.
+-XX:+UseG1GC
+
+
+# Define the heap region size used by G1GC.
+# The heap is divided into regions for efficient memory
+# management. Larger heaps benefit from larger regions.
+#
+# Example:
+# 32M means each region is 32 MB.
+-XX:G1HeapRegionSize=32M
+
+
+########################################################
+# MEMORY MANAGEMENT SAFETY OPTIONS
+########################################################
+
+# Prevents the JVM from spending too much time
+# doing garbage collection. If GC overhead becomes
+# too high, the JVM may terminate the process.
+-XX:+UseGCOverheadLimit
+
+
+# Allows explicit garbage collection calls to run concurrently
+# instead of stopping the entire application.
+-XX:+ExplicitGCInvokesConcurrent
+
+
+########################################################
+# ERROR HANDLING OPTIONS
+########################################################
+
+# If the JVM runs out of memory, create a heap dump.
+# Heap dumps help engineers debug memory leaks
+# or excessive memory usage.
+-XX:+HeapDumpOnOutOfMemoryError
+
+
+# Immediately terminate the JVM if an OutOfMemoryError occurs.
+# This prevents the server from running in an unstable state.
+-XX:+ExitOnOutOfMemoryError
+
+
+########################################################
+# OPTIONAL DEBUGGING OPTIONS (NOT ALWAYS USED)
+########################################################
+
+# Enable detailed GC logging for troubleshooting memory issues.
+# Uncomment if you need to debug garbage collection behavior.
+#
+# -Xlog:gc
+
+
+# Specify heap dump file location.
+# Example:
+# -XX:HeapDumpPath=/var/log/trino/heapdump.hprof
+```
+- jvm.config defines the JVM runtime parameters used to start the Trino server. It controls heap memory size, garbage collection settings, and error handling to ensure efficient execution of queries.
+
+### Node properties (node.properties)
+- Each Trino node must have a unique node.id defined in node.properties. When deploying multiple coordinators, they are usually named coordinator-1, coordinator-2, etc., or derived from pod hostnames in Kubernetes. In production, one coordinator is typically active while the other acts as a standby behind a load balancer.
+- In a Trino cluster, workers typically share the same configuration while the coordinator has a slightly different configuration. Each node still requires a unique node ID, which is often derived from the hostname in Kubernetes
+
+```
+trino-cluster/
+│
+├── docker-compose.yml
+│
+├── coordinator/
+│   ├── config.properties
+│   ├── node.properties
+│   └── jvm.config
+│
+├── worker/
+│   ├── config.properties
+│   ├── node.properties
+│   └── jvm.config
+│
+└── catalog/
+    └── postgres.properties
+```
