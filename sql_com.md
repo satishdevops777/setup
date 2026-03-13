@@ -258,3 +258,74 @@ Example errors:
 Query failed: coordinator unreachable
 Connection refused :8080
 ```
+### What Happens When Coordinator Fails
+
+- Running queries fail: All active queries stop.
+- New queries cannot be submitted: Clients cannot connect
+- Workers become idle
+- Workers:
+    - Do not automatically elect a new coordinator
+    - Wait for coordinator to return
+    - Trino does not support automatic leader election.
+    ```
+    Query aborted: coordinator lost
+    http://coordinator:8080 unreachable
+    Worker 1 → idle
+    Worker 2 → idle
+    Worker 3 → idle
+    ```
+
+### How to Detect Coordinator Failure?
+```
+systemctl status trino
+curl http://localhost:8080/v1/info
+http://coordinator:8080/ui
+/var/log/trino/server.log
+```
+### How to Fix Coordinator Failure?
+```
+systemctl restart trino #Check service
+Coordinator often fails due to JVM memory issues.
+
+/etc/trino/jvm.config
+-Xmx16G
+
+Check disk
+If disk is full:
+df -h
+
+tail -f /var/log/trino/server.log #Check Logs
+
+```
+
+### Standby Coordinator
+
+```
+           Clients
+              │
+        Load Balancer
+          /        \
+Active Coordinator   Standby Coordinator
+        │
+   Worker Nodes
+
+```
+- Active coordinator → Handles queries
+- Standby coordinator → Idle / waiting
+- Workers → Execute tasks
+
+
+Even with HA:
+
+- Running queries fail if the active coordinator crashes.
+- Only new queries succeed after failover.
+- This is a limitation of Trino’s architecture.
+
+### How Trino handles fault tolerance?
+- Trino provides fault tolerance mainly at the worker level. The coordinator monitors worker nodes using heartbeats. If a worker fails during query execution, the coordinator reschedules the failed tasks on other workers using data splits. However, if the coordinator fails, running queries fail because the coordinator manages query planning and scheduling.
+
+### Why is Trino not a database?
+- Trino is not a database because it does not store data. It is a distributed SQL query engine that queries data from external systems like MySQL, PostgreSQL, Hive, and Iceberg using connectors. Trino processes the data in memory and returns results, but the actual data remains in the underlying storage systems.
+
+### Difference between Trino and Presto?
+- Trino is a fork of Presto created by the original developers after they left Facebook. Both are distributed SQL query engines with similar architecture, but Trino has faster development, more community contributions, and more modern features compared to Presto.
