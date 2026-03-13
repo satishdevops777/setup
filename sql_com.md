@@ -55,3 +55,206 @@ VALUES
   - Values must be unique
   - Values cannot be NULL
   - Used to identify each row uniquely
+ 
+
+### Docker Compose configuration
+- It defines multiple containers (services) that will run together to build a data platform stack
+  ```bash
+  docker-compose up -d #Docker will create and start all these services
+  ```
+
+### Architecture Overview
+
+- Your stack contains:
+    - Trino → Distributed SQL query engine
+    - PostgreSQL → Database
+    - MySQL → Database
+    - Metabase → BI / dashboard tool
+    - Keycloak → Identity & authentication server
+    - OAuth2 Proxy → Authentication gateway for Metabase
+
+    ```
+    User → OAuth2 Proxy → Keycloak (login)
+                ↓
+              Metabase
+                ↓
+              Trino
+         ↙             ↘
+      Postgres        MySQL
+    ```
+
+  ### Trino Service
+  ```yml
+  trino:
+  image: trinodb/trino
+  container_name: trino
+  ports:
+    - "8080:8080" #HOST_PORT : CONTAINER_PORT
+  volumes:
+    - ./trino:/etc/trino #HOST_PATH : CONTAINER_PATH
+  ```
+- Purpose: SQL query engine
+- What it does:
+    - Connects to multiple databases
+    - Allows federated queries
+
+- ./trino → Folder in your host system (current directory)
+- /etc/trino → Folder inside the container
+  ```
+  Host: ./trino/config.properties
+            ↓
+  Container: /etc/trino/config.properties
+  ```
+- The container will read configuration files from your host machine.
+- If you edit a file:
+  ```
+  ./trino/config.properties
+  ```
+  - the change immediately reflects inside the container.
+
+1️⃣ Trino Architecture
+
+- Trino has two main components:
+    - Coordinator
+    - Workers
+
+- Coordinator
+    - Accepts client queries
+    - Parses and plans the query
+    - Splits the query into tasks
+    - Sends tasks to workers
+    - Collects final results
+- Workers
+    - Execute the tasks
+    - Process data
+    - Send results back to coordinator
+
+Simple Architecture
+```
+Client
+   │
+   ▼
+Coordinator
+   │
+   ├── Worker 1
+   ├── Worker 2
+   ├── Worker 3
+   └── Worker N
+```
+
+### Example Flow
+***Query Sent to Coordinator***
+- Client sends query using:
+    - Trino CLI
+    - JDBC
+    - BI tool
+
+- Example flow:
+  ```
+      Client
+       │
+       ▼
+    Trino Coordinator
+  ```
+- The Coordinator receives the SQL.
+***Parsing and Planning***
+- Coordinator does:
+    - Parsing
+        - Checks SQL syntax
+    - Semantic analysis
+        - Identifies catalogs
+            - mysql.shipments.shipments
+            - postgresql.public.customers
+    - Logical Plan
+        - Example logical plan:
+          ```
+          Scan MySQL shipments
+          Scan PostgreSQL customers
+          Join on customer_id = id
+          Return columns
+          ```
+  ***Query Split into Stages***
+  - Coordinator divides the query into execution stages.
+  - Example:
+    ```
+    Stage 1 → Scan MySQL table
+    Stage 2 → Scan PostgreSQL table
+    Stage 3 → Perform JOIN
+    Stage 4 → Return results
+    ```
+  ***Tasks Distributed to Workers***
+    - Coordinator sends tasks to worker nodes
+    - Workers run the tasks
+    
+ ***Data Fetch from MySQL and PostgreSQL***
+ - Workers connect to both databases using connectors.
+ - Example
+   ```
+   Worker 1 → fetch MySQL shipments data
+   Worker 2 → fetch PostgreSQL customers data
+   Worker 3 → assist with join processing
+   ```
+
+- Trino connectors handle this:
+  ```
+  mysql connector
+  postgresql connector
+  ```
+
+***Data Processing in Workers***
+- Workers process data in parallel.
+- Example:
+```
+MySQL shipments table
+---------------------
+Split 1 → Worker 1
+Split 2 → Worker 2
+
+PostgreSQL customers table
+--------------------------
+Split 1 → Worker 2
+Split 2 → Worker 3
+```
+- Each worker processes part of the dataset
+***Join Execution***
+- Workers perform the join condition:
+```
+s.customer_id = c.id
+```
+***Partial Results Sent to Coordinator***
+- Workers send partial results:
+  ```
+  Worker 1 → partial rows
+  Worker 2 → partial rows
+  Worker 3 → partial rows
+  ```
+- Coordinator merges them
+
+***Final Result Returned***
+- Coordinator sends final result to client.
+```
+Coordinator
+   │
+   ▼
+Client (CLI / BI tool)
+```
+- This query is called Federated Query.
+
+- Meaning: One query accessing multiple data sources.
+- Example sources Trino supports: MySQL, PostgreSQL, Hive, Iceberg, Kafka, MongoDB
+
+***Trino coordinator parses the query and creates a distributed execution plan. Workers fetch data from MySQL and PostgreSQL using connectors, process data in parallel, perform the join in memory, and send results back to the coordinator.***
+
+### What is Coordinator Failure?
+- Coordinator failure means:
+    - Coordinator process crashes
+    - Server goes down
+    - Network becomes unreachable
+    - JVM crash
+    - Out of memory
+    - Host machine failure
+Example errors:
+```
+Query failed: coordinator unreachable
+Connection refused :8080
+```
