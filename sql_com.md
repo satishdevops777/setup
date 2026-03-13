@@ -329,3 +329,88 @@ Even with HA:
 
 ### Difference between Trino and Presto?
 - Trino is a fork of Presto created by the original developers after they left Facebook. Both are distributed SQL query engines with similar architecture, but Trino has faster development, more community contributions, and more modern features compared to Presto.
+
+
+
+### How trino connetcs do databases?
+- Trino connects to databases using something called connectors. A connector is like a plugin that allows Trino to talk to a specific data source.
+- A connector is a module that enables Trino to communicate with external systems such as: MySQL, PostgreSQL, Apache Hive, Apache Kafka
+- Each connector knows how to query that specific system
+- Connector configuration files are placed in:
+```
+/etc/trino/catalog/
+    mysql.properties
+    postgresql.properties
+```
+
+### What happens if Trino has 100 data sources?
+- In Trino, each data source is configured as a catalog using a connector. If there are 100 data sources, there will be 100 catalog configurations in /etc/trino/catalog. When a query references a catalog, Trino uses the corresponding connector to fetch data from that system. The coordinator plans the query and workers execute it in parallel.
+
+### Connectors
+```
+mysql.properties
+postgresql.properties
+```
+
+```yml
+connector.name=mysql
+connection-url=jdbc:mysql://mysql-host:3306
+connection-user=trino
+connection-password=trino
+
+connector.name=postgresql
+connection-url=jdbc:postgresql://postgres:5432/logistics
+connection-user=trino
+connection-password=trino
+```
+- logistics → Database name
+- public → Default schema inside that database
+- tables → Stored inside the schema
+
+```
+Docker starts container
+        │
+PostgreSQL server starts
+        │
+Create user = trino
+Create database = logistics
+        │
+Run init.sql script
+        │
+Database ready
+```
+- In Docker Compose, the PostgreSQL container is created using the official image. Environment variables create the database, user, and password automatically during startup. The port mapping exposes PostgreSQL on localhost:5432, and the initialization SQL script runs automatically to create tables or seed data.
+
+```
+/docker-entrypoint-initdb.d/init.sql # This is a special directory inside the PostgreSQL Docker image.
+
+
+Docker starts container
+        │
+PostgreSQL initializes database
+        │
+Check /docker-entrypoint-initdb.d/
+        │
+Run init.sql automatically
+        │
+Tables / data created
+```
+
+```
+Host machine
+--------------------------------
+./init-db/postgres-init.sql
+          │
+          │ volume mount
+          ▼
+Container
+--------------------------------
+/docker-entrypoint-initdb.d/init.sql
+```
+- The name inside the container does not have to match the host name.
+  ```
+    - volumes:
+      - ./init-db/postgres-init.sql:/docker-entrypoint-initdb.d/setup.sql
+  ```
+- Because PostgreSQL runs all .sql files in that directory.
+- Docker mounts ./init-db/postgres-init.sql from the host and exposes it inside the container as /docker-entrypoint-initdb.d/init.sql, which PostgreSQL automatically executes during initialization
