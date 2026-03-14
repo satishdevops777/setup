@@ -735,6 +735,11 @@ Keycloak (SSO Authentication with Oauth2)
       - "8081:8080"
   ```
 - The start-dev command runs Keycloak in development mode, However, the Keycloak UI may still display "HTTPS Required" depending on the realm configuration.
+- Start keyclock using below command
+```
+git pull
+docker-compose up -d keycloak
+```
 
 
 <img width="1603" height="851" alt="image" src="https://github.com/user-attachments/assets/6f9bb762-67ae-4917-8afb-4b27985749b8" />
@@ -783,7 +788,7 @@ Keycloak (SSO Authentication with Oauth2)
     <img width="896" height="129" alt="image" src="https://github.com/user-attachments/assets/2e25b96a-65ce-46d5-ac44-b2f75ab52b87" />
 
 **⚠️ Note: Disabling HTTPS should only be done in development or testing environments. In production deployments, HTTPS must be enabled to ensure secure authentication and communication.**
-  - Restart Keycloak and trino
+  - Restart Keycloak 
     ```
     docker restart keycloak
     ```
@@ -800,8 +805,7 @@ Keycloak (SSO Authentication with Oauth2)
       Username: admin
       Password: admin
       ```
-
-      <img width="1676" height="948" alt="image" src="https://github.com/user-attachments/assets/ae461eb4-d3ce-4514-b930-673e3090d2d4" />
+      
 
 **Step 3 – How to access Trino through Keycloak (SSO)**
 - To access Trino through Keycloak (SSO), the next steps are to create a realm, create a client for Trino in Keycloak, and configure Trino to use Keycloak as an OpenID Connect provider.
