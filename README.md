@@ -912,6 +912,7 @@ docker-compose up -d keycloak
   - Run Below commands
     ```
     git pull
+    docker-compose down trino
     docker-compose up -d trino
     docker ps #Trino should up
     ```
@@ -919,11 +920,12 @@ docker-compose up -d keycloak
   
   - Open Trino and It will redirect to keycloak for authentication: 
     ```
-    https://174.129.146.225:8000
+    https://174.129.146.225:8443
     ```
   - Create User and set password in Datawave realm and use those credentials to access trino.
- 
-- 
+
+
+
 
     <img width="1420" height="947" alt="image" src="https://github.com/user-attachments/assets/9f23a853-af5e-4241-b7f1-f84cabf42caa" />
 
