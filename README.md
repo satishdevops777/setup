@@ -787,6 +787,7 @@ docker-compose up -d keycloak
     ```
     <img width="896" height="129" alt="image" src="https://github.com/user-attachments/assets/2e25b96a-65ce-46d5-ac44-b2f75ab52b87" />
 
+
 **⚠️ Note: Disabling HTTPS should only be done in development or testing environments. In production deployments, HTTPS must be enabled to ensure secure authentication and communication.**
   - Restart Keycloak 
     ```
