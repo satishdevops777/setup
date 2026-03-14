@@ -718,7 +718,7 @@ Keycloak (SSO Authentication with Oauth2)
 ```
 **Step 1 – Running Keycloak in Development Mode (Disable HTTPS)**
 - In this setup, Keycloak is started in development mode, which disables the strict HTTPS requirement. This allows services such as Trino and Metabase to communicate with Keycloak using HTTP during testing.
-- In the docker-compose.yml file, Keycloak is configured with the following command:
+- In the docker-compose.yml file, the Keycloak configuration is present but currently commented out. Please uncomment the relevant code to enable it.
   ```yml
   keycloak:
     image: quay.io/keycloak/keycloak:latest
@@ -727,9 +727,10 @@ Keycloak (SSO Authentication with Oauth2)
     environment:
       KEYCLOAK_ADMIN: admin
       KEYCLOAK_ADMIN_PASSWORD: admin
-      KC_HOSTNAME: 174.129.146.225
-      KC_HOSTNAME_PORT: 8081
-      KC_PROXY: edge
+      KC_HTTP_ENABLED: true
+      KC_HOSTNAME_STRICT: false
+      KC_HOSTNAME_STRICT_HTTPS: false
+
     ports:
       - "8081:8080"
   ```
@@ -768,7 +769,6 @@ Keycloak (SSO Authentication with Oauth2)
     ```
     /opt/keycloak/bin/kcadm.sh get realms/master | grep sslRequired
     ```
-    
 
     | Value      | Meaning                   |
     | ---------- | ------------------------- |
@@ -786,7 +786,6 @@ Keycloak (SSO Authentication with Oauth2)
   - Restart Keycloak and trino
     ```
     docker restart keycloak
-    docker restart trino
     ```
 
     <img width="1199" height="525" alt="image" src="https://github.com/user-attachments/assets/ccc2f91c-8826-4647-a5e0-200089fe8fe3" />
@@ -803,6 +802,174 @@ Keycloak (SSO Authentication with Oauth2)
       ```
 
       <img width="1676" height="948" alt="image" src="https://github.com/user-attachments/assets/ae461eb4-d3ce-4514-b930-673e3090d2d4" />
+
+**Step 3 – How to access Trino through Keycloak (SSO)**
+- To access Trino through Keycloak (SSO), the next steps are to create a realm, create a client for Trino in Keycloak, and configure Trino to use Keycloak as an OpenID Connect provider.
+- Create a New Realm: Click Manage Realm → Create Realm
+- In Datawave Realm Settings set SSL to "None"
+  ```
+  Realm Name: datawave # You can use any name
+  ```
+  <img width="1613" height="858" alt="image" src="https://github.com/user-attachments/assets/d78556ba-041c-4d01-bba1-8fe33806d496" />
+
+- Create a Client for Trino: Clients → Create Client
+  - Use the following values: Click Save.
+    | Field       | Value                                                      |
+    | ----------- | ---------------------------------------------------------- |
+    | Client ID   | trino                                                      |
+    | Client Type | OpenID Connect                                             |
+    | Root URL    | https://174.129.146.225:8443                                |
+
+    <img width="1499" height="666" alt="image" src="https://github.com/user-attachments/assets/d406f9ad-bdd8-44e6-9dea-37e2adc95c87" />
+
+- Configure Client Capability Settings
+  - Use the same options shown and Click Save
+    ```
+    | Setting               | Value   |
+    | --------------------- | ------- |
+    | Client Authentication | ON      |
+    | Authorization         | OFF     |
+    | Standard Flow         | ENABLED |
+    | Direct Access Grants  | OFF     |
+    | Implicit Flow         | OFF     |
+    | Service Accounts      | OFF     |
+    ```
+- Configure Redirect URI
+  
+  | Field               | Value                                                         |
+  | ------------------- | ------------------------------------------------------------- |
+  | Valid Redirect URIs |  https://174.129.146.225:8443/ *                              |
+  | Web Origins         | *                                                             |
+
+- Copy Client Secret
+  - Go to:
+    ```
+    Clients → trino → Credentials
+    ```
+  - Copy the Client Secret. We will use this in trino/config.properties
+ 
+- Configure Trino using HTTPS
+  - Genarate an SSL Self signed Certificate in EC2 with below command
+    ```
+    keytool -genkeypair \
+    -alias trino \
+    -keyalg RSA \
+    -keysize 2048 \
+    -validity 3650 \
+    -keystore trino-keystore.jks \
+    -storepass changeit \
+    -keypass changeit \
+    -dname "CN=174.129.146.225"
+    ```
+  - Run below command to move the SSL
+    ```
+    mv trino-keystore.jks ~/sql_federation_architecture/trino/
+    ```
+  - In below config.properties replace REPLACE_WITH_CLIENT_SECRET with credential-secret value and Append this code to trino/config.properties.
+    ```
+    # Query limits
+  
+    query.max-memory=2GB
+    query.max-memory-per-node=512MB
+    
+    
+    # Discovery service
+    
+    discovery.uri=https://174.129.146.225:8443
+    
+    
+    # OAuth2 authentication
+    
+    http-server.authentication.type=oauth2
+    web-ui.authentication.type=oauth2
+    
+    
+    # HTTPS server
+    
+    http-server.https.enabled=true
+    http-server.https.port=8443
+    http-server.https.keystore.path=/etc/trino/trino-keystore.jks
+    http-server.https.keystore.key=changeit
+    
+    
+    # Keycloak
+    
+    http-server.authentication.oauth2.issuer=http://174.129.146.225:8081/realms/datawave
+    http-server.authentication.oauth2.client-id=trino
+    http-server.authentication.oauth2.client-secret= REPLACE_WITH_CLIENT_SECRET
+    http-server.authentication.oauth2.scopes=openid
+    http-server.authentication.oauth2.principal-field=preferred_username
+    
+    
+    # internal communication
+    
+    internal-communication.shared-secret=trino-secret-123
+    ```
+  - Run Below commands
+    ```
+    git pull
+    docker-compose up -d trino
+    docker ps #Trino should up
+    ```
+  - 
+  
+  - Open Trino and It will redirect to keycloak for authentication: 
+    ```
+    https://174.129.146.225:8000
+    ```
+  - Create User and set password in Datawave realm and use those credentials to access trino.
+ 
+- 
+
+    <img width="1420" height="947" alt="image" src="https://github.com/user-attachments/assets/9f23a853-af5e-4241-b7f1-f84cabf42caa" />
+
+  - Metabase → Trino Connection Settings
+    | Field        | Value            |
+    | ------------ | ---------------- |
+    | Display Name | Trino Federation |
+    | Host         | trino            |
+    | Port         | 8080             |
+    | Catalog      | postgres         |
+    | Username     | admin            |
+
+
+    <img width="1457" height="727" alt="image" src="https://github.com/user-attachments/assets/be7f1db5-de18-446a-bde1-a895ace99ce3" />
+
+    - Go to:
+      ```
+      Admin Settings → Authentication → OpenID Connect
+      ```
+      <img width="1902" height="861" alt="image" src="https://github.com/user-attachments/assets/78dd57e2-fff9-432a-b801-0584bf92a4db" />
+
+      
+    - Fill In and save
+      ```
+      | Field             | Value                                                                                                                                                        |
+      | ----------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+      | Client ID         | metabase                                                                                                                                                     |
+      | Client Secret     | (paste from Keycloak)                                                                                                                                        |
+      | Authorization URL | [http://174.129.146.225:8081/realms/datawave/protocol/openid-connect/auth](http://174.129.146.225:8081/realms/datawave/protocol/openid-connect/auth)         |
+      | Token URL         | [http://174.129.146.225:8081/realms/datawave/protocol/openid-connect/token](http://174.129.146.225:8081/realms/datawave/protocol/openid-connect/token)       |
+      | User Info URL     | [http://174.129.146.225:8081/realms/datawave/protocol/openid-connect/userinfo](http://174.129.146.225:8081/realms/datawave/protocol/openid-connect/userinfo) |
+      ```
+    - Logout from Metabase
+      - Open again:
+        ```
+        http://174.129.146.225:3000
+        ```
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 **Step 3 – How to access Metabase through Keycloak (SSO)**
 - To access Metabase through Keycloak (SSO), the next steps are to create a realm, create a client for Metabase in Keycloak, and configure Metabase to use Keycloak as an OpenID Connect provider.
